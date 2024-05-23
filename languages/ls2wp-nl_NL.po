@@ -1,0 +1,110 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: LS2WP\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-16 09:55+0000\n"
+"PO-Revision-Date: 2024-05-18 07:14+0000\n"
+"Last-Translator: \n"
+"Language-Team: Nederlands\n"
+"Language: nl_NL\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.6.9; wp-6.5.3\n"
+"X-Domain: ls2wp"
+
+#: includes/ls2wp-admin.php:43
+msgid "Basic settings"
+msgstr "Basis instellingen"
+
+#: includes/ls2wp-admin.php:52
+msgid "Comma seperated list of surevey ids"
+msgstr "Door komma's gescheiden lijst met survey ids"
+
+#: includes/ls2wp-admin.php:68
+msgid "Credentials for the Limesurvey database"
+msgstr "Credentials voor de Limesurvey database"
+
+#: includes/ls2wp-admin.php:117
+msgid "Credentials for the Limesurvey json-rpc interface"
+msgstr "Credentials voor de Limesurvey json-rpc interface"
+
+#: includes/ls2wp-admin.php:157
+#, fuzzy
+#| msgid "Give the following info"
+msgid "Give the following info:"
+msgstr "Geef de volgende informatie"
+
+#: includes/ls2wp-admin.php:101
+msgid "Hostname of the Limesurvey database"
+msgstr "Hostnaam van de Limesurvey database"
+
+#. Author URI of the plugin
+msgid "https://ruifrok.net"
+msgstr "https://ruifrok.net"
+
+#: includes/ls2wp-admin.php:159
+msgid "If you want to use the database of the Limesurvey installation"
+msgstr ""
+
+#. Description of the plugin
+msgid "Load Limesurveydata to Wordpress"
+msgstr "Laad Limesurvey data in Wordpress"
+
+#. Name of the plugin
+msgid "LS2WP"
+msgstr ""
+
+#: includes/ls2wp-admin.php:9 includes/ls2wp-admin.php:19
+msgid "LS2WP settings"
+msgstr "LS2WP instellingen"
+
+#: includes/ls2wp-admin.php:93
+msgid "Name of the Limesurvey database"
+msgstr "Naam van de Limesurvey database"
+
+#: includes/ls2wp-admin.php:134
+msgid "Password of the Limesurvey account"
+msgstr "Wachtwoord van het Limesurvey account"
+
+#: includes/ls2wp-admin.php:84
+#| msgid "Paasword of the Limesurvey database"
+msgid "Password of the Limesurvey database"
+msgstr "Wachtwoord van de Limesurvey database"
+
+#: includes/ls2wp-admin.php:109
+msgid "Prefix of the tables in the Limesurvey database"
+msgstr "Prefix van de tabellen in de Limesurvey database"
+
+#. Author of the plugin
+msgid "Rob Ruifrok"
+msgstr ""
+
+#: includes/ls2wp-admin.php:26
+msgid "Save"
+msgstr "Opslaan"
+
+#: includes/ls2wp-admin.php:143
+msgid "URL of the Limesurvey install"
+msgstr "URL van de Limesurvey installatie"
+
+#: includes/ls2wp-admin.php:60
+msgid "Use the Limesurvey database"
+msgstr "Gebruik de Limesurvey database"
+
+#: includes/ls2wp-admin.php:125
+msgid "Username of the Limesurvey account"
+msgstr "Gebruikersnaam van het Limesurvey account"
+
+#: includes/ls2wp-admin.php:76
+#| msgid "Username of theLimesurvey database"
+msgid "Username of the Limesurvey database"
+msgstr "Gebruikersnaam van de Limesurvey database"
+
+#: includes/ls2wp-admin.php:158
+msgid ""
+"Which surveys are available on your wordpress website. A comma separated "
+"list of survey ids"
+msgstr ""

@@ -1,0 +1,61 @@
+
+.ls2wp-settings ul{
+	list-style:disc inside;
+}
+
+.question-form div{
+	break-inside: avoid;
+	padding-bottom:10px;
+	margin-right:40px;
+	border-bottom:1px solid #c4c4c4;	
+}
+
+.answer-values ul{
+	list-style:disc inside;
+}
+
+.answer-value{
+	border-collapse:collapse;
+}
+
+.answer-value th,
+.answer-value td{
+	border:1px solid #c4c4c4;
+	padding:5px 10px;
+}
+
+.answer-value-form h4{
+	margin:10px 5px;
+	font-weight:700;
+}
+
+.question{
+	font-size:1.1em;
+	border-top:1px solid #c4c4c4;
+	padding-top:5px;
+	margin-top:10px;
+	width:60%;
+}
+
+
+.question-form ul{
+	column-count:3;
+}
+
+.question-form ul li{
+	font-weight:bold;
+}
+
+#answer-values,
+#select-survey{
+	color:white;
+	background-color:#1859f4;
+	cursor:pointer;
+}
+
+#answer-values:hover,
+#select-survey:hover{
+	color:initial;
+	background-color:initial;	
+}
+

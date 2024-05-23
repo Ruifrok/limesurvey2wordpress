@@ -1,0 +1,97 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: LS2WP\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-16 14:33+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.6.9; wp-6.5.3\n"
+"X-Domain: ls2wp"
+
+#: includes/ls2wp-admin.php:43
+msgid "Basic settings"
+msgstr ""
+
+#: includes/ls2wp-admin.php:52
+msgid "Comma seperated list of surevey ids"
+msgstr ""
+
+#: includes/ls2wp-admin.php:68
+msgid "Credentials for the Limesurvey database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:117
+msgid "Credentials for the Limesurvey json-rpc interface"
+msgstr ""
+
+#: includes/ls2wp-admin.php:154
+msgid "Give the following info"
+msgstr ""
+
+#: includes/ls2wp-admin.php:101
+msgid "Hostname of the Limesurvey database"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://ruifrok.net"
+msgstr ""
+
+#. Description of the plugin
+msgid "Load Limesurveydata to Wordpress"
+msgstr ""
+
+#. Name of the plugin
+msgid "LS2WP"
+msgstr ""
+
+#: includes/ls2wp-admin.php:9 includes/ls2wp-admin.php:19
+msgid "LS2WP settings"
+msgstr ""
+
+#: includes/ls2wp-admin.php:93
+msgid "Name of the Limesurvey database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:84
+msgid "Paasword of the Limesurvey database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:134
+msgid "Password of the Limesurvey account"
+msgstr ""
+
+#: includes/ls2wp-admin.php:109
+msgid "Prefix of the tables in the Limesurvey database"
+msgstr ""
+
+#. Author of the plugin
+msgid "Rob Ruifrok"
+msgstr ""
+
+#: includes/ls2wp-admin.php:26
+msgid "Save"
+msgstr ""
+
+#: includes/ls2wp-admin.php:143
+msgid "URL of the Limesurvey install"
+msgstr ""
+
+#: includes/ls2wp-admin.php:60
+msgid "Use the Limesurvey database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:125
+msgid "Username of the Limesurvey account"
+msgstr ""
+
+#: includes/ls2wp-admin.php:76
+msgid "Username of theLimesurvey database"
+msgstr ""
