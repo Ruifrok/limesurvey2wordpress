@@ -55,10 +55,9 @@ add_shortcode('testfuncties', 'test_code');
 		//$survey_id = 311591;
 		//$survey_id = 516331;
 		$token = 'Idlbjspu9WrJ9Wb';
-		$email = 'henkd@test.nl';
+		
 		$user = get_userdata(3);
-
-		$test = ls2wp_get_responses_survey($survey_id);
+		$email = $user->user_email;
 
 		//print_obj(count($test));
 		print_obj($test);

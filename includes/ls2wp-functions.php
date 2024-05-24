@@ -110,7 +110,7 @@ function ls2wp_get_participants($survey_id, $name = ''){
 }
 
 //
-function ls2wp_get_participant($survey_id, $user, $add_participant = true){
+function ls2wp_get_participant($survey_id, $user, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
 	
@@ -246,3 +246,57 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 	
 	return $active_surveys;
 }
+
+//update email in Limesurvey partcipant
+add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
+	function ls2wp_check_user_email_updated( $user_id, $old_user_data ) {
+		
+		$old_user_email = $old_user_data->data->user_email;
+
+		$user = get_userdata( $user_id );
+		$new_user_email = $user->user_email;	
+		
+		if ( $new_user_email === $old_user_email ) return;
+		
+		$use_rpc = get_option('use_rpc');
+		
+		if($use_rpc){
+
+			$id_string = get_option('ls_survey_ids');
+			if(!empty($id_string)) $survey_ids = explode( ',', $id_string);
+			
+			$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
+			$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
+
+			if(is_array($s_key)){		
+				return $s_key['status'];
+			}
+
+			foreach($survey_ids as $survey_id){
+				
+				$participant = ls2wp_get_participant($survey_id, $user);
+				
+				if(!empty($participant)){
+					
+					$result = $rpc_client->set_participant_properties($s_key, $survey_id,['email' => $old_user_email],['email' => $new_user_email]);
+					
+				}
+set_transient('test1',$result, 900);				
+			}
+			
+
+			$rpc_client->release_session_key( $s_key);			
+			
+		} else {
+		
+			global $lsdb;		
+				
+			$survey_tokens = ls2wp_get_email_surveys_tokens($old_user_email);
+		
+			foreach($survey_tokens as $survey_id => $tokens){
+				foreach($tokens as $token){
+					$lsdb->update($lsdb->prefix.'tokens_'.$survey_id, ['email' => $new_user_email], ['token' => $token]);
+				}					
+			}			
+		}
+	}

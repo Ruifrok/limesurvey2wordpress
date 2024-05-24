@@ -4,6 +4,8 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 //Nieuw wpdb object verbonden met limesurvey database
 add_action ('init','ls2wp_limesurvey_db', 1);
 	function ls2wp_limesurvey_db() {
+		
+		
 		global $lsdb;
 
 		//$lsdb = new wpdb(LSDB_USER, LSDB_PASSWORD, LSDB_NAME, LSDB_HOST);		
@@ -70,7 +72,14 @@ function ls2wp_db_get_survey_groups(){
 }
 
 //Zoek survey_ids en tokens bij email
-function ls2wp_get_email_surveys_tokens($email, $args) {	
+function ls2wp_get_email_surveys_tokens($email, $args=array()) {
+
+	$default = array(
+		'survey_group_id' 	=> '',
+		'all_surveys'		=> false,
+	);
+	
+	$args = wp_parse_args($args, $default);	
 	
 	global $lsdb;
 	
@@ -343,7 +352,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 				
 				$question_code = $questions[$qid]->title;
 				$question_title = $questions[$qid]->title;
-				$question = $questions[$qid]->question;
+				$question = !empty($questions[$qid]->question) ? $questions[$qid]->question: ' ';
 				$question_type = $questions[$qid]->type;
 				
 				if(isset($answers[$qid][$answer_code]['answer'])) $answer = $answers[$qid][$answer_code]['answer'];
@@ -396,7 +405,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	
 	foreach($surveys as $survey) {
 				
-		$survey_id = $survey['sid'];	
+		$survey_id = $survey->sid;	
 		
 		$table_name = "{$lsdb->prefix}tokens_{$survey_id}";
 		if($lsdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)continue;		
@@ -569,7 +578,7 @@ function ls2wp_db_get_participants($survey_id, $name='') {
 	return $participants;	
 }
 
-//Haal participant iut LS mbv token
+//Haal participant uit LS mbv token
 function ls2wp_db_get_participant_by_token($survey_id, $token){
 	global $lsdb;
 	
@@ -587,7 +596,7 @@ function ls2wp_db_get_participant_by_token($survey_id, $token){
 }
 //haal ls-participantgegevens op bij wp_gebruiker.
 //$add_participant: Als geen participant, dan een aanmaken.
-function ls2wp_db_get_participant($survey_id, $user, $add_participant = true){
+function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
 	global $lsdb;
 	
 	if(empty($survey_id)) return false;
@@ -626,32 +635,12 @@ function ls2wp_db_get_participant($survey_id, $user, $add_participant = true){
 	return (array)$participant;	
 }
 
-
-
-
+//Genereer een nieuw Limesurvey token
 function ls2wp_generate_token($length=15 ){
 	
 	$bytes = random_bytes(ceil($length / 2));
-	$token = substr(bin2hex($bytes), 1, $lenght);
+	$token = substr(bin2hex($bytes), 0, $length);
 
 	return $token;
 }
 
-//Nagaan of er al een testresultaat met dit token aanwezig is
-/* function token_bestaat($token, $post_type) {
-	$args = array(
-		'posts_per_page'	=> -1,
-		'post_type'		=> $post_type,
-		'meta_key'		=> 'token. Toegangscode',
-		'meta_value'	=> $token
-	);
-	$clienten = get_posts( $args );
-
-	if ($clienten) $token_bestaat = $clienten[0]->ID;
-	else $token_bestaat = false;
-
-	wp_reset_query();
-
-return $token_bestaat;	
-	
-} */

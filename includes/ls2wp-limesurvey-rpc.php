@@ -23,7 +23,7 @@ add_action('init', 'ls2wp_set_ls_cred');
 
 //haal ls-participantgegevens op bij wp_gebruiker.
 //$add_participant: Als geen participant, dan een aanmaken.
-function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = true){
+function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
 	
 	$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
 	$s_key = $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
