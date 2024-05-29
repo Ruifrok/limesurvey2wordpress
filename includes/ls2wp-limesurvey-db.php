@@ -4,11 +4,11 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 //Nieuw wpdb object verbonden met limesurvey database
 add_action ('init','ls2wp_limesurvey_db', 1);
 	function ls2wp_limesurvey_db() {
-		
+
+		$use_rpc = get_option('use_rpc');
+		if($use_rpc) return;
 		
 		global $lsdb;
-
-		//$lsdb = new wpdb(LSDB_USER, LSDB_PASSWORD, LSDB_NAME, LSDB_HOST);		
 		
 		$lsdb_user = get_option('lsdb_user');
 		$lsdb_passw = get_option('lsdb_passw');
@@ -27,12 +27,12 @@ function ls2wp_db_get_surveys() {
 	global $lsdb;
 	//alle surveys in de database
 
-	$sql = $lsdb->prepare("
-		SELECT sid, survey{$lsdb->prefix}title, startdate, expires, active, gsid, survey{$lsdb->prefix}language AS language, datecreated, tokenlength
+	$sql = "
+		SELECT sid, survey{$lsdb->prefix}title, startdate, expires, active, gsid, survey{$lsdb->prefix}language AS language, anonymized, datecreated, tokenlength
 		FROM {$lsdb->prefix}surveys
 		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
 		ORDER BY datecreated	
-	");
+	";
 	
 	$surveys = $lsdb->get_results($sql);
 	
@@ -43,7 +43,7 @@ function ls2wp_db_get_survey($survey_id) {
 	global $lsdb;
 	
 	$sql = $lsdb->prepare("
-		SELECT sid, gsid, survey{$lsdb->prefix}language AS language, survey{$lsdb->prefix}title, startdate, expires, active, datecreated, tokenlength
+		SELECT sid, gsid, survey{$lsdb->prefix}language AS language, survey{$lsdb->prefix}title, anonymized, startdate, expires, active, datecreated, tokenlength, listpublic
 		FROM {$lsdb->prefix}surveys
 		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
 		WHERE sid = %d 
@@ -147,19 +147,16 @@ function ls2wp_get_token_survey_id($token) {
 function ls2wp_db_get_responses_survey($survey_id){
 	global $lsdb;
 	
-	$questions = ls2wp_db_get_questions($survey_id);		
+	$questions = ls2wp_db_get_questions($survey_id);
 
-	$qids = array_column($questions, 'qid');
-
-	$answers = ls2wp_db_get_answers($qids);		
+	$answers = ls2wp_db_get_answers($survey_id);		
 	
 	$sql = $lsdb->prepare("
 		SELECT *
 		FROM {$lsdb->prefix}survey_%d
 	", $survey_id);	
 
-	$rows = $lsdb->get_results($sql);
-	
+	$rows = $lsdb->get_results($sql);	
 	
 	if($rows){
 		foreach($rows as $row){
@@ -189,17 +186,20 @@ function ls2wp_db_get_user_responses($user, $args=array()) {
 	$email = $user->user_email;
 
 	$surveys = ls2wp_get_email_surveys_tokens($email, $args);
-	
+
 	$responses = array();
 	
 	foreach($surveys as $survey_id => $tokens) {
+		
+		$survey = ls2wp_db_get_survey($survey_id);
+		if($survey->anonymized == 'Y') continue;
 		
 		//Alle vragen in deze survey
 		$questions = ls2wp_db_get_questions($survey_id);		
 
 		$qids = array_column($questions, 'qid');
 
-		$answers = ls2wp_db_get_answers($qids);			
+		$answers = ls2wp_db_get_answers($survey_id);			
 	
 		foreach($tokens as $token){
 		
@@ -292,13 +292,18 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	$survey_id  = reset($questions)->sid;	
 
 	$survey = ls2wp_db_get_survey($survey_id);
-
-	$participant = ls2wp_db_get_participant_by_token($survey_id, $response->token);
+	
+	if($survey->anonymized == 'N' && ls2wp_participant_table_exists($survey_id)){
+		$participant = ls2wp_db_get_participant_by_token($survey_id, $response->token);
+		$completed = $participant->completed;
+	} else {
+		$completed = '';		
+	}
 	
 	$response_nw = new stdClass();
 
 	$response_nw->survey_id = $survey_id;
-	$response_nw->completed = $participant->completed;
+	$response_nw->completed = $completed;
 	$response_nw->group_survey_id = $survey->gsid;
 	$response_nw->survey_title = $survey->surveyls_title;
 	$response_nw->datecreated = $survey->datecreated;
@@ -370,7 +375,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 			$response_nw->$question_code = $answer_code;
 		} else {
 			
-			$response_nw->$question_code['answer-code'] = $answer_code;
+			$response_nw->$question_code['answer_code'] = $answer_code;
 
 			if(empty($answer)) {				
 				$response_nw->$question_code['answer'] = $answer_code;
@@ -508,7 +513,7 @@ function ls2wp_get_answer($qid, $antw) {
 function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	global $lsdb;
 	$results = array();
-	
+
 	$sql = $lsdb->prepare("
 	SELECT {$lsdb->prefix}questions.qid, parent_qid, sid, gid, type, title, other, question
 	FROM {$lsdb->prefix}questions
@@ -561,17 +566,16 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 function ls2wp_db_get_participants($survey_id, $name='') {
 	global $lsdb;
 	
-	if(empty($survey_id)) return false;
-
+	if(!ls2wp_participant_table_exists($survey_id)) return 'Error: No survey participants table';
+	
 	if(empty($name)) $name = '%';
 	else $name = '%'.$name.'%';
-	
+
 	$sql = $lsdb->prepare("
-		SELECT firstname, lastname, email, {$lsdb->prefix}tokens_%d.token, completed
-		FROM {$lsdb->prefix}tokens_%d
-		INNER JOIN {$lsdb->prefix}survey_%d	ON {$lsdb->prefix}tokens_%d.token = {$lsdb->prefix}survey_%d.token
+		SELECT *
+		FROM {$lsdb->prefix}tokens_%d		
 		WHERE firstname LIKE %s OR lastname LIKE %s
-	", $survey_id, $survey_id, $survey_id, $survey_id, $survey_id, $name, $name);	
+	", $survey_id, $name, $name);
 
 	$participants = $lsdb->get_results($sql);
 	
@@ -599,7 +603,7 @@ function ls2wp_db_get_participant_by_token($survey_id, $token){
 function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
 	global $lsdb;
 	
-	if(empty($survey_id)) return false;
+	if(!ls2wp_participant_table_exists($survey_id)) return 'Error: No survey participants table';
 
 	$email = $user->user_email;
 		
@@ -638,9 +642,23 @@ function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
 //Genereer een nieuw Limesurvey token
 function ls2wp_generate_token($length=15 ){
 	
-	$bytes = random_bytes(ceil($length / 2));
-	$token = substr(bin2hex($bytes), 0, $length);
+    $string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $string_length = strlen($string);
+    $token = '';
+    for ($i = 0; $i < $length; $i ++) {
+        $token = $token . $string[rand(0, $string_length - 1)];
+    }	
 
 	return $token;
 }
 
+//Bepaal of participant tabel bestaat	
+function ls2wp_participant_table_exists($survey_id){
+	
+	global $lsdb;
+	
+	$table_name = $lsdb->prefix.'tokens_'.$survey_id;	
+
+	if($lsdb->get_var( $lsdb->prepare( "SHOW TABLES LIKE %s", $table_name )) == $table_name) return $table_name;
+	else return false; 
+}

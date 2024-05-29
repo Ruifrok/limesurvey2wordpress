@@ -46,7 +46,7 @@ function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
 		$participant_data[0]['language'] = $lang;
 		
 		$nw_participants = $rpc_client->add_participants($s_key, $survey_id, $participant_data);
-		$participant = $nw_participants[0];
+		if(empty($nw_participants['status']) )$participant = $nw_participants[0];
 
 		if(empty($participant['token'])) return 'Er kon geen enquète deelnemer worden aangemaakt';
 	}
@@ -58,7 +58,7 @@ function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
 
 //alle basis responses van een survey
 function ls2wp_export_responses($survey_id){
-	
+
 	$responses = get_transient('responses_'.$survey_id);
 	
 	if(empty($responses)){
@@ -84,10 +84,12 @@ function ls2wp_export_responses($survey_id){
 
 //fieldmap van de vragen van een survey met toevoeging van antwoordopties met assessment values
 function ls2wp_get_ls_q_fieldmap($survey_id){
-	
+
 	$ls_fieldmap = get_transient('fieldmap_'.$survey_id);
 		
 	if(empty($ls_fieldmap)){
+		
+		$ls_fieldmap = array();
 
 		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
 		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
@@ -111,9 +113,9 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 				}
 				
 				$q_props = $rpc_client->get_question_properties($s_key, $field['qid']);
-		
+
 				$field['answeroptions'] = $q_props['answeroptions'];
-				
+		
 				$ls_fieldmap[$key] = $field;
 						
 			}			
@@ -128,8 +130,8 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 	
 }
 
-function ls2wp_rpc_get_questions($survey_id){
-	
+function ls2wp_rpc_get_questions($survey_id){	
+
 	$fieldmap = ls2wp_get_ls_q_fieldmap($survey_id);
 	
 	foreach($fieldmap as $quest){		
@@ -223,7 +225,7 @@ function ls2wp_rpc_get_responses_survey($survey_id){
 	$fieldmap = ls2wp_get_ls_q_fieldmap($survey_id);
 	
 	$completed = ls2wp_tokens_completed($survey_id);
-
+//print_obj($responses);
 	$survey = ls2wp_rpc_get_survey($survey_id);
 
 	foreach($responses as $response){
@@ -232,7 +234,9 @@ function ls2wp_rpc_get_responses_survey($survey_id){
 		
 		$response_nw = ls2wp_add_field_data($response, $fieldmap);
 		
-		$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
+		if($survey->anonymized == 'N'){
+			$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
+		} else $response_nw->completed = '';
 		
 		$response_nw = ls2wp_add_wp_answer_values($response_nw);
 		
@@ -247,6 +251,8 @@ function ls2wp_rpc_get_responses_survey($survey_id){
 function ls2wp_add_field_data($response, $fieldmap){
 
 	$survey_id = reset($fieldmap)['sid'];
+	
+	$response = (object)$response;
 
 	$response_nw = new stdClass();
 	
@@ -258,7 +264,10 @@ function ls2wp_add_field_data($response, $fieldmap){
 	$response_nw->datecreated = $props['datecreated'];
 	
 	$completed = ls2wp_tokens_completed($survey_id);
-	$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
+
+	if($props['anonymized'] == 'N'){
+		$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
+	} else $response_nw->completed = '';
 
 	foreach($response as $key => $answer_code) {		
 		
@@ -304,7 +313,7 @@ function ls2wp_add_field_data($response, $fieldmap){
 	return $response_nw;
 }
 
-//Array with limited dataset af all surveys
+//Array with limited dataset of all surveys
 function ls2wp_rpc_get_surveys(){
 	
 	$surveys_nw = get_transient('ls_surveys');
@@ -326,6 +335,7 @@ function ls2wp_rpc_get_surveys(){
 		
 			$survey['gsid'] = $props['gsid'];
 			$survey['language'] = $props['language'];
+			$survey['anonymized'] = $props['anonymized'];
 			$survey['datecreated'] = $props['datecreated'];
 			$survey['tokenlength'] = $props['tokenlength'];
 				
@@ -373,7 +383,7 @@ function ls2wp_rpc_get_survey_props($survey_id){
 
 //Alle responses van user in de aangeboden surveys
 //Als $all_serveys = true dan wordt in alle surveys in de database gezocht
-function ls2wp_rpc_get_user_responses($email, $args = array()){
+function ls2wp_rpc_get_user_responses($user, $args = array()){
 	
 	$defaults = array(
 		'survey_group_id' 	=> '',
@@ -381,7 +391,9 @@ function ls2wp_rpc_get_user_responses($email, $args = array()){
 	);
 	
 	$args = wp_parse_args($args, $defaults);	
-
+	
+	$email= $user->user_email;
+	
 	$surveys = ls2wp_rpc_get_surveys();
 
 	$surveys =ls2wp_filter_surveys($surveys, $args);
@@ -398,29 +410,31 @@ function ls2wp_rpc_get_user_responses($email, $args = array()){
 	foreach($surveys as $survey){
 
 		$participants = ls2wp_rpc_get_participants($survey->sid);
-	
+		
+		if(!is_array($participants)) continue;
+
 		foreach($participants as $participant){
 
-			if(!is_array($participant) || empty($participant['token']) || empty($participant['email']) || $participant['email'] != $email) continue;	
+
+			if(!is_object($participant) || empty($participant->token) || empty($participant->email) || $participant->email != $email || $survey->anonymized == 'Y') continue;	
 		
-			$b64_resp = $rpc_client->export_responses_by_token($s_key, $survey['sid'], 'json', $participant['token']);
+			$b64_resp = $rpc_client->export_responses_by_token($s_key, $survey->sid, 'json', $participant->token);
 
 			if(is_string($b64_resp)){
 				$json_resp = base64_decode($b64_resp);
 				$resp = json_decode($json_resp, true);		
 				
 				$response = ($resp['responses'][0]);
-				$response = ['survey_title' => $survey['surveyls_title']] + $response;
+				$response = ['survey_title' => $survey->surveyls_title] + $response;
 		
-				$fieldmap = ls2wp_get_ls_q_fieldmap($survey['sid']);
+				$fieldmap = ls2wp_get_ls_q_fieldmap($survey->sid);
 
 				$response_nw = ls2wp_add_field_data($response, $fieldmap);
 				
 				$response_nw = ls2wp_add_wp_answer_values($response_nw);
 				
 				$responses[] = $response_nw;
-			}
-					
+			}					
 		}
 	}
 	$rpc_client->release_session_key( $s_key);
@@ -453,7 +467,7 @@ function ls2wp_get_survey_props($survey_id){
 
 //Alle deelnemers aan een survey met response
 function ls2wp_rpc_get_participants($survey_id, $name = ''){
-
+	
 	$participants = get_transient('participants_'.$survey_id);
 	
 	if(empty($participants)){
@@ -463,19 +477,19 @@ function ls2wp_rpc_get_participants($survey_id, $name = ''){
 		if(is_array($s_key)){		
 			return $s_key['status'];
 		}
+		
+		$atts = array('emailstatus', 'language', 'blacklisted', 'sent', 'remindersent', 'remindercount', 'completed', 'usesleft', 'validfrom', 'validuntil', 'mpid', 'attribute_1', 'attribute_2', 'attribute_3');
+		
+		$participants = $rpc_client->list_participants($s_key, $survey_id, 0, 10000, false, $atts);
 	
-		$participants = $rpc_client->list_participants($s_key, $survey_id, 0, 10000, false, array('completed'));
+		if(!empty($participants['status'])) return $participants['status'];
 		
 		foreach($participants as $key => $participant){
-			if($participant['completed'] == 'N'){ 
-				unset($participants[$key]);
-				continue;
-			}
 
 			$participants[$key] = (object)($participant['participant_info'] + $participant);
 			
 			unset($participants[$key]->participant_info);
-			unset($participants[$key]->tid);
+			//unset($participants[$key]->tid);
 			
 		}
 		
@@ -501,7 +515,7 @@ function ls2wp_rpc_get_participants($survey_id, $name = ''){
 function ls2wp_tokens_completed($survey_id){	
 		
 	$participants = ls2wp_rpc_get_participants($survey_id);
-	
+//print_obj($participants);	
 	foreach($participants as $participant){
 		$token_completed[$participant->token] = $participant->completed;
 	}

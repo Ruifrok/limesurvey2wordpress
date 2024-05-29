@@ -65,15 +65,15 @@ function ls2wp_get_answers($survey_id){
 }
 
 //Zoek group name bij group id
-function  ls2wp_get_group_name($group_id, $sid){
+function  ls2wp_get_group_name($group_id, $survey_id){
 	
 	$use_rpc = get_option('use_rpc');
 	
 	if($use_rpc) {		
-		$group_name = ls2wp_rpc_get_group_name($group_id, $sid);
+		$group_name = ls2wp_rpc_get_group_name($group_id, $survey_id);
 			
 	} else {		
-		$group_name = ls2wp_db_get_group_name($group_id, $sid);
+		$group_name = ls2wp_db_get_group_name($group_id, $survey_id);
 		
 	}	
 	
@@ -109,7 +109,8 @@ function ls2wp_get_participants($survey_id, $name = ''){
 	return $participants;
 }
 
-//
+//haal ls-participantgegevens op bij wp_gebruiker.
+//$add_participant: Als geen participant, dan een aanmaken.
 function ls2wp_get_participant($survey_id, $user, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
@@ -188,13 +189,14 @@ function ls2wp_add_wp_answer_values($response){
 		if(!is_array($question)) continue;
 	
 		if(empty($wp_answer_values[$question['title']])) continue;
-			
+//print_obj($question);			
 		if($question['type'] == 'M' && !empty($question['answer_code'])){
 
 			$response->$q_code['value'] = $wp_answer_values[$question['title']][$question['aid']]['value'];
 		}
 		
-	}
+	}	
+	
 	return $response;
 }
 
@@ -247,7 +249,7 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 	return $active_surveys;
 }
 
-//update email in Limesurvey partcipant
+//update email in Limesurvey partcipant als email in wp_user wordt aangepast
 add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 	function ls2wp_check_user_email_updated( $user_id, $old_user_data ) {
 		
@@ -281,9 +283,8 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 					$result = $rpc_client->set_participant_properties($s_key, $survey_id,['email' => $old_user_email],['email' => $new_user_email]);
 					
 				}
-set_transient('test1',$result, 900);				
-			}
-			
+				
+			}			
 
 			$rpc_client->release_session_key( $s_key);			
 			

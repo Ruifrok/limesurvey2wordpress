@@ -48,16 +48,20 @@ add_filter('ls2wp_survey_filter_args','ls2wp_survey_filter_new_args', 5, 2);
 add_shortcode('testfuncties', 'test_code');
 	function test_code() {		
 	
+		global $lsdb;		
 		ob_start();
 
-		$survey_id = 696413;
-		//$survey_id = 863694;
+		//$survey_id = 297532;
+		//$survey_id = 779253;
+		$survey_id = 863694;
 		//$survey_id = 311591;
 		//$survey_id = 516331;
 		$token = 'Idlbjspu9WrJ9Wb';
 		
 		$user = get_userdata(3);
-		$email = $user->user_email;
+		$email = $user->user_email;		
+		
+		$test = ls2wp_export_statistics($survey_id);
 
 		//print_obj(count($test));
 		print_obj($test);
