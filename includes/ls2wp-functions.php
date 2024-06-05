@@ -109,18 +109,18 @@ function ls2wp_get_participants($survey_id, $name = ''){
 	return $participants;
 }
 
-//haal ls-participantgegevens op bij wp_gebruiker.
+//haal ls-participantgegevens op bij email.
 //$add_participant: Als geen participant, dan een aanmaken.
-function ls2wp_get_participant($survey_id, $user, $add_participant = false){
+function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
 	
 	if($use_rpc) {		
-		$participant = ls2wp_rpc_get_participant($survey_id, $user, $add_participant);
+		$participant = ls2wp_rpc_get_participant($survey_id, $email, $add_participant);
 	} else {
 
 		
-		$participant = ls2wp_db_get_participant($survey_id, $user, $add_participant);
+		$participant = ls2wp_db_get_participant($survey_id, $email, $add_participant);
 		
 	}
 
@@ -128,14 +128,14 @@ function ls2wp_get_participant($survey_id, $user, $add_participant = false){
 }
 
 //Alle responsen van een deelnemer
-function ls2wp_get_user_responses($user, $args=array()){
+function ls2wp_get_participant_responses($email, $args=array()){
 	
 	$use_rpc = get_option('use_rpc');
 	
 	if($use_rpc) {		
-		$responses = ls2wp_rpc_get_user_responses($user, $args);
+		$responses = ls2wp_rpc_get_participant_responses($email, $args);
 	} else {		
-		$responses = ls2wp_db_get_user_responses($user, $args);
+		$responses = ls2wp_db_get_participant_responses($email, $args);
 	}
 	
 	return $responses;
@@ -180,7 +180,7 @@ function ls2wp_filter_surveys($surveys, $args){
 //Voeg de antwoordwaardes uit de settings page toe aan response
 function ls2wp_add_wp_answer_values($response){
 	
-	$wp_answer_values = get_option($response->survey_id.'_answer_values');
+	$wp_answer_values = get_option($response['survey_id'].'_answer_values');
 
 	if(empty($wp_answer_values)) return $response;
 
@@ -189,10 +189,10 @@ function ls2wp_add_wp_answer_values($response){
 		if(!is_array($question)) continue;
 	
 		if(empty($wp_answer_values[$question['title']])) continue;
-//print_obj($question);			
+		
 		if($question['type'] == 'M' && !empty($question['answer_code'])){
 
-			$response->$q_code['value'] = $wp_answer_values[$question['title']][$question['aid']]['value'];
+			$response[$q_code]['value'] = $wp_answer_values[$question['title']][$question['aid']]['value'];
 		}
 		
 	}	
@@ -202,12 +202,12 @@ function ls2wp_add_wp_answer_values($response){
 
 //Ophalen url naar nog niet ingevulde survey. Als ingevuld dan return false
 function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){	
-	
-	$participant = ls2wp_get_participant($survey_id, $user, $add_participant);
 
-	if(!is_array($participant) || empty($participant['usesleft'])) return false;
+	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
+
+	if(!is_object($participant) || empty($participant->usesleft)) return false;
 	
-	$survey_url = LS2WP_SITEURL.'index.php/'.$survey_id.'?token='.$participant['token'].'&newtest=Y';
+	$survey_url = LS2WP_SITEURL.'index.php/'.$survey_id.'?token='.$participant->token.'&newtest=Y';
 	
 	return $survey_url;
 }
@@ -217,8 +217,6 @@ function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){
 function ls2wp_ls_active_surveys($user, $add_participant = true){
 	
 	$id_string = get_option('ls_survey_ids');
-
-	$survey_actief = false;
 	
 	$active_surveys = array();
 
@@ -231,8 +229,9 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 		foreach($surveys as $survey){
 			
 			if(in_array($survey->sid, $survey_ids) && $survey->active == 'Y'){
-			
+print_obj($survey->sid);			
 				$survey->url = ls2wp_get_ls_survey_url($survey->sid, $user, $add_participant);
+				
 				$survey->user_name = $user->display_name;
 				
 				if($survey->url) $active_surveys[] = $survey;

@@ -21,9 +21,9 @@ add_action('init', 'ls2wp_set_ls_cred');
 	}
 
 
-//haal ls-participantgegevens op bij wp_gebruiker.
+//haal ls-participantgegevens op bij email.
 //$add_participant: Als geen participant, dan een aanmaken.
-function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
+function ls2wp_rpc_get_participant($survey_id, $email, $add_participant = false){
 	
 	$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
 	$s_key = $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
@@ -32,13 +32,15 @@ function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
 		return $s_key['status'];
 	}	
 
-	$participant = $rpc_client->get_participant_properties($s_key, $survey_id, array('email' => $user->user_email));
+	$participant = $rpc_client->get_participant_properties($s_key, $survey_id, array('email' => $email));
 	
 	//Als er nog geen ls-participant is voor deze client, dan toevoegen
 	if(empty($participant['token']) && $add_participant){
 		
 		$survey_props = $rpc_client->get_survey_properties($s_key, $survey_id);
 		$lang = $survey_props['language'];
+		
+		$user = get_user_by('email', $email);
 		
 		$participant_data[0]['firstname'] = $user->first_name;
 		$participant_data[0]['lastname'] = $user->last_name;
@@ -53,12 +55,12 @@ function ls2wp_rpc_get_participant($survey_id, $user, $add_participant = false){
 	
 	$rpc_client->release_session_key( $s_key);
 	
-	return $participant;
+	return (object)$participant;
 }
 
 //alle basis responses van een survey
 function ls2wp_export_responses($survey_id){
-
+	
 	$responses = get_transient('responses_'.$survey_id);
 	
 	if(empty($responses)){
@@ -72,7 +74,7 @@ function ls2wp_export_responses($survey_id){
 		$b64_resp = $rpc_client->export_responses($s_key, $survey_id, 'json');
 		
 		$json_resp = base64_decode($b64_resp);
-		$responses = json_decode($json_resp, false)->responses;
+		$responses = json_decode($json_resp, true)['responses'];
 		
 		set_transient('responses_'.$survey_id, $responses, DAY_IN_SECONDS);
 			
@@ -225,18 +227,18 @@ function ls2wp_rpc_get_responses_survey($survey_id){
 	$fieldmap = ls2wp_get_ls_q_fieldmap($survey_id);
 	
 	$completed = ls2wp_tokens_completed($survey_id);
-//print_obj($responses);
+
 	$survey = ls2wp_rpc_get_survey($survey_id);
 
 	foreach($responses as $response){
 		
-		$response = (object)(['survey_title' => $survey->surveyls_title] + (array)$response);
+		$response = ['survey_title' => $survey->surveyls_title] + (array)$response;
 		
 		$response_nw = ls2wp_add_field_data($response, $fieldmap);
 		
-		if($survey->anonymized == 'N'){
-			$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
-		} else $response_nw->completed = '';
+		if($survey->anonymized == 'N' && is_array($completed)){
+			$response_nw['completed'] = !empty($completed[$response['token']]) ? $completed[$response['token']] : '';
+		} else $response_nw['completed'] = '';
 		
 		$response_nw = ls2wp_add_wp_answer_values($response_nw);
 		
@@ -252,61 +254,57 @@ function ls2wp_add_field_data($response, $fieldmap){
 
 	$survey_id = reset($fieldmap)['sid'];
 	
-	$response = (object)$response;
-
-	$response_nw = new stdClass();
-	
-	$response_nw->survey_id = $survey_id;
+	$response_nw['survey_id'] = $survey_id;
 
 	$props = ls2wp_get_survey_props($survey_id);
 	
-	$response_nw->gsid = $props['gsid'];		
-	$response_nw->datecreated = $props['datecreated'];
+	$response_nw['gsid'] = $props['gsid'];		
+	$response_nw['datecreated'] = $props['datecreated'];
 	
 	$completed = ls2wp_tokens_completed($survey_id);
 
-	if($props['anonymized'] == 'N'){
-		$response_nw->completed = !empty($completed[$response->token]) ? $completed[$response->token] : '';
-	} else $response_nw->completed = '';
+	if($props['anonymized'] == 'N' && is_array($completed)){
+		$response_nw['completed'] = !empty($completed[$response['token']]) ? $completed[$response['token']] : '';
+	} else $response_nw['completed'] = '';
 
 	foreach($response as $key => $answer_code) {		
 		
 		if(isset($fieldmap[$key])){
 	
 			if($fieldmap[$key]['type'] == '*') continue;
-			
-			$response_nw->$key['answer_code'] = $answer_code;
+	
+			$response_nw[$key]['answer_code'] = $answer_code;
 		
 			if($fieldmap[$key]['answeroptions'] == 'No available answer options'){
-				$response_nw->$key['answer'] = $answer_code;
-				$response_nw->$key['value'] = false;					
+				$response_nw[$key]['answer'] = $answer_code;
+				$response_nw[$key]['value'] = false;					
 			} else {
 
 				if(empty($fieldmap[$key]['answeroptions'][$answer_code]['answer'])) $fieldmap[$key]['answeroptions'][$answer_code]['answer'] = false;
 				if(empty($fieldmap[$key]['answeroptions'][$answer_code]['assessment_value'])) $fieldmap[$key]['answeroptions'][$answer_code]['assessment_value'] = false;
 				
 				
-				$response_nw->$key['answer'] = $fieldmap[$key]['answeroptions'][$answer_code]['answer'];
-				$response_nw->$key['value'] = $fieldmap[$key]['answeroptions'][$answer_code]['assessment_value'];			
+				$response_nw[$key]['answer'] = $fieldmap[$key]['answeroptions'][$answer_code]['answer'];
+				$response_nw[$key]['value'] = $fieldmap[$key]['answeroptions'][$answer_code]['assessment_value'];			
 			
 			}
 
-			if($answer_code == 'Y') $response_nw->$key['answer'] = 'Ja';
-			if($answer_code == 'N') $response_nw->$key['answer'] = 'Nee';
-			if($answer_code == 'M') $response_nw->$key['answer'] = 'Man';
-			if($answer_code == 'F') $response_nw->$key['answer'] = 'Vrouw';				
+			if($answer_code == 'Y') $response_nw[$key]['answer'] = 'Ja';
+			if($answer_code == 'N') $response_nw[$key]['answer'] = 'Nee';
+			if($answer_code == 'M') $response_nw[$key]['answer'] = 'Man';
+			if($answer_code == 'F') $response_nw[$key]['answer'] = 'Vrouw';				
 			
-			$response_nw->$key['type'] = $fieldmap[$key]['type'];
-			$response_nw->$key['title'] = $fieldmap[$key]['title'];
-			$response_nw->$key['aid'] = $fieldmap[$key]['aid'];
-			$response_nw->$key['gid'] = $fieldmap[$key]['gid'];
-			$response_nw->$key['group_name'] = $fieldmap[$key]['group_name'];
-			$response_nw->$key['question'] = $fieldmap[$key]['question'];
-			if(isset($fieldmap[$key]['subquestion'])) $response_nw->$key['subquestion'] = $fieldmap[$key]['subquestion'];
-			else $response_nw->$key['subquestion'] = false;								
+			$response_nw[$key]['type'] = $fieldmap[$key]['type'];
+			$response_nw[$key]['title'] = $fieldmap[$key]['title'];
+			$response_nw[$key]['aid'] = $fieldmap[$key]['aid'];
+			$response_nw[$key]['gid'] = $fieldmap[$key]['gid'];
+			$response_nw[$key]['group_name'] = $fieldmap[$key]['group_name'];
+			$response_nw[$key]['question'] = $fieldmap[$key]['question'];
+			if(isset($fieldmap[$key]['subquestion'])) $response_nw[$key]['subquestion'] = $fieldmap[$key]['subquestion'];
+			else $response_nw[$key]['subquestion'] = false;								
 			
 		} else {
-			$response_nw->$key = $answer_code;
+			$response_nw[$key] = $answer_code;
 		}			
 	}
 	
@@ -350,6 +348,7 @@ function ls2wp_rpc_get_surveys(){
 	return $surveys_nw;		
 }
 
+
 function ls2wp_rpc_get_survey($survey_id){
 	
 	$surveys = ls2wp_rpc_get_surveys();
@@ -361,7 +360,6 @@ function ls2wp_rpc_get_survey($survey_id){
 	}
 	
 }
-
 
 //Get survey with all properties
 function ls2wp_rpc_get_survey_props($survey_id){
@@ -383,16 +381,14 @@ function ls2wp_rpc_get_survey_props($survey_id){
 
 //Alle responses van user in de aangeboden surveys
 //Als $all_serveys = true dan wordt in alle surveys in de database gezocht
-function ls2wp_rpc_get_user_responses($user, $args = array()){
+function ls2wp_rpc_get_participant_responses($email, $args = array()){
 	
 	$defaults = array(
 		'survey_group_id' 	=> '',
 		'all_surveys'		=> false,		
 	);
 	
-	$args = wp_parse_args($args, $defaults);	
-	
-	$email= $user->user_email;
+	$args = wp_parse_args($args, $defaults);
 	
 	$surveys = ls2wp_rpc_get_surveys();
 
@@ -465,7 +461,7 @@ function ls2wp_get_survey_props($survey_id){
 	return $survey_props;	
 }
 
-//Alle deelnemers aan een survey met response
+//Alle deelnemers aan een survey
 function ls2wp_rpc_get_participants($survey_id, $name = ''){
 	
 	$participants = get_transient('participants_'.$survey_id);
@@ -489,7 +485,7 @@ function ls2wp_rpc_get_participants($survey_id, $name = ''){
 			$participants[$key] = (object)($participant['participant_info'] + $participant);
 			
 			unset($participants[$key]->participant_info);
-			//unset($participants[$key]->tid);
+			
 			
 		}
 		
@@ -515,7 +511,9 @@ function ls2wp_rpc_get_participants($survey_id, $name = ''){
 function ls2wp_tokens_completed($survey_id){	
 		
 	$participants = ls2wp_rpc_get_participants($survey_id);
-//print_obj($participants);	
+	
+	if(!is_array($participants)) return $participants;
+
 	foreach($participants as $participant){
 		$token_completed[$participant->token] = $participant->completed;
 	}

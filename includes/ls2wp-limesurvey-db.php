@@ -15,6 +15,8 @@ add_action ('init','ls2wp_limesurvey_db', 1);
 		$lsdb_name = get_option('lsdb_name');
 		$lsdb_host = get_option('lsdb_host');
 		
+		if(empty($lsdb_user)) return;
+		
 		$lsdb = new wpdb($lsdb_user, $lsdb_passw, $lsdb_name, $lsdb_host);
 		
 		$lsdb_prefix = get_option('lsdb_prefix');
@@ -160,11 +162,13 @@ function ls2wp_db_get_responses_survey($survey_id){
 	
 	if($rows){
 		foreach($rows as $row){
+			
+			$row = (array)$row;
 		
 			$response = ls2wp_translate_sgq_code($row, $questions, $answers);
 			$response = ls2wp_add_wp_answer_values($response);
 			
-			$responses[] = $response;
+			$responses[] = (array)$response;
 		}	
 	} else return false;
 	
@@ -172,8 +176,8 @@ function ls2wp_db_get_responses_survey($survey_id){
 	
 }
 
-//Alle responsen uit surveys van gegeven wp-user
-function ls2wp_db_get_user_responses($user, $args=array()) {
+//Alle responsen uit surveys van gegeven email
+function ls2wp_db_get_participant_responses($email, $args=array()) {
 	global $lsdb;
 	
 	$default = array(
@@ -182,8 +186,6 @@ function ls2wp_db_get_user_responses($user, $args=array()) {
 	);
 	
 	$args = wp_parse_args($args, $default);
-	
-	$email = $user->user_email;
 
 	$surveys = ls2wp_get_email_surveys_tokens($email, $args);
 
@@ -210,9 +212,12 @@ function ls2wp_db_get_user_responses($user, $args=array()) {
 			", $survey_id, $token);
 
 			$result = $lsdb->get_results($sql);			
-		
+	
 			if(!empty($result[0])){
-				$response = ls2wp_translate_sgq_code ($result[0], $questions, $answers);
+				
+				$resp = (array)$result[0];
+				
+				$response = ls2wp_translate_sgq_code ($resp, $questions, $answers);
 				
 				$response = ls2wp_add_wp_answer_values($response);
 			
@@ -294,20 +299,18 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	$survey = ls2wp_db_get_survey($survey_id);
 	
 	if($survey->anonymized == 'N' && ls2wp_participant_table_exists($survey_id)){
-		$participant = ls2wp_db_get_participant_by_token($survey_id, $response->token);
+		$participant = ls2wp_db_get_participant_by_token($survey_id, $response['token']);
 		$completed = $participant->completed;
 	} else {
 		$completed = '';		
 	}
-	
-	$response_nw = new stdClass();
 
-	$response_nw->survey_id = $survey_id;
-	$response_nw->completed = $completed;
-	$response_nw->group_survey_id = $survey->gsid;
-	$response_nw->survey_title = $survey->surveyls_title;
-	$response_nw->datecreated = $survey->datecreated;
-	$response_nw->survey_title = $survey->surveyls_title;
+	$response_nw['survey_id'] = $survey_id;
+	$response_nw['completed'] = $completed;
+	$response_nw['group_survey_id'] = $survey->gsid;
+	$response_nw['survey_title'] = $survey->surveyls_title;
+	$response_nw['datecreated'] = $survey->datecreated;
+	$response_nw['survey_title'] = $survey->surveyls_title;
 	
 
 	//Antwoordcodes uitwerken
@@ -372,29 +375,29 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 		}
 		
 		if(empty($question)){
-			$response_nw->$question_code = $answer_code;
+			$response_nw[$question_code] = $answer_code;
 		} else {
 			
-			$response_nw->$question_code['answer_code'] = $answer_code;
+			$response_nw[$question_code]['answer_code'] = $answer_code;
 
 			if(empty($answer)) {				
-				$response_nw->$question_code['answer'] = $answer_code;
+				$response_nw[$question_code]['answer'] = $answer_code;
 			} else {
-				$response_nw->$question_code['answer'] = $answer;
+				$response_nw[$question_code]['answer'] = $answer;
 			}			
 			if(isset($value)) {
-				$response_nw->$question_code['value'] = $value;
+				$response_nw[$question_code]['value'] = $value;
 			} else {
-				$response_nw->$question_code['value'] = '';
+				$response_nw[$question_code]['value'] = '';
 			}
 
-			$response_nw->$question_code['type'] = $question_type;
-			$response_nw->$question_code['title'] = $question_title;
-			$response_nw->$question_code['aid'] = $question_aid;
-			if(isset($group_id)) $response_nw->$question_code['gid'] = $group_id;
-			$response_nw->$question_code['group_name'] = $group_name;
-			$response_nw->$question_code['question'] = $question;
-			$response_nw->$question_code['subquestion'] = $subquestion;
+			$response_nw[$question_code]['type'] = $question_type;
+			$response_nw[$question_code]['title'] = $question_title;
+			$response_nw[$question_code]['aid'] = $question_aid;
+			if(isset($group_id)) $response_nw[$question_code]['gid'] = $group_id;
+			$response_nw[$question_code]['group_name'] = $group_name;
+			$response_nw[$question_code]['question'] = $question;
+			$response_nw[$question_code]['subquestion'] = $subquestion;
 
 		}			
 	}
@@ -562,7 +565,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	return $results;		
 }
 
-//alle deelnamers aan een survey met response
+//alle deelnamers aan een survey
 function ls2wp_db_get_participants($survey_id, $name='') {
 	global $lsdb;
 	
@@ -573,7 +576,7 @@ function ls2wp_db_get_participants($survey_id, $name='') {
 
 	$sql = $lsdb->prepare("
 		SELECT *
-		FROM {$lsdb->prefix}tokens_%d		
+		FROM {$lsdb->prefix}tokens_%d	
 		WHERE firstname LIKE %s OR lastname LIKE %s
 	", $survey_id, $name, $name);
 
@@ -598,14 +601,12 @@ function ls2wp_db_get_participant_by_token($survey_id, $token){
 	
 	return $participant;	
 }
-//haal ls-participantgegevens op bij wp_gebruiker.
+//haal ls-participantgegevens op bij email.
 //$add_participant: Als geen participant, dan een aanmaken.
-function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
+function ls2wp_db_get_participant($survey_id, $email, $add_participant = false){
 	global $lsdb;
 	
-	if(!ls2wp_participant_table_exists($survey_id)) return 'Error: No survey participants table';
-
-	$email = $user->user_email;
+	if(!ls2wp_participant_table_exists($survey_id)) return ['status' => 'Error: No survey participants table'];
 		
 	$sql = $lsdb->prepare("
 		SELECT *
@@ -617,6 +618,8 @@ function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
 
 	if(empty($participant) && $add_participant){
 
+		$user = get_user_by('email', $email);
+		
 		$token = ls2wp_generate_token();
 		
 		$survey = ls2wp_db_get_survey($survey_id);
@@ -631,12 +634,12 @@ function ls2wp_db_get_participant($survey_id, $user, $add_participant = false){
 		
 		$success = $lsdb->insert($table_name, $participant);
 		
-		if($success) $participant = ls2wp_db_get_participant($survey_id, $user);
+		if($success) $participant = ls2wp_db_get_participant($survey_id, $email);
 		
 		else return 'Er kon geen enquète deelnemer worden aangemaakt';
 	}	
 	
-	return (array)$participant;	
+	return $participant;	
 }
 
 //Genereer een nieuw Limesurvey token

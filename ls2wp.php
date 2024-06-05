@@ -21,7 +21,7 @@ include_once('includes/ls2wp-limesurvey-db.php');
 
 add_action('admin_enqueue_scripts', 'ls2wp_admin_style');
 	function ls2wp_admin_style() {
-		wp_enqueue_style('admin-styles', plugin_dir_url(__FILE__).'assets/admin-style.css');
+		wp_enqueue_style('ls2wp_admin-styles', plugin_dir_url(__FILE__).'assets/admin-style.css');
 		wp_enqueue_script('ls2wp-admin-scripts', plugin_dir_url(__FILE__).'assets/ls2wp-admin.js', array('jquery'));
 	}
 
@@ -58,14 +58,14 @@ add_shortcode('testfuncties', 'test_code');
 		//$survey_id = 516331;
 		$token = 'Idlbjspu9WrJ9Wb';
 		
-		$user = get_userdata(3);
+		$user = get_userdata(2);
 		$email = $user->user_email;		
 		
-		$test = ls2wp_export_statistics($survey_id);
+		$test = ls2wp_ls_active_surveys($user, $add_participant = true);
 
-		//print_obj(count($test));
+		print_obj(count($test));
 		print_obj($test);
-		
+
 		$test1 = get_transient('test1');
 		$test2 = get_transient('test2');
 		$test3 = get_transient('test3');
