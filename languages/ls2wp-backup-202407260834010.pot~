@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LS2WP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-26 08:41+0000\n"
+"POT-Creation-Date: 2024-07-26 08:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -18,10 +18,6 @@ msgstr ""
 
 #: includes/ls2wp-admin.php:271
 msgid "Add the credentials of this user to the fields below."
-msgstr ""
-
-#: includes/ls2wp-admin.php:305
-msgid "Assessemnt values"
 msgstr ""
 
 #: includes/ls2wp-admin.php:304
@@ -59,7 +55,7 @@ msgstr ""
 #: includes/ls2wp-admin.php:198
 msgid ""
 "If Limesurvey and Wordpress are installed on the same server, you should "
-"fill in the database credentials you used installing Limesurvey."
+"fill in the credentials you used installing Limesurvey."
 msgstr ""
 
 #: includes/ls2wp-admin.php:167
@@ -95,10 +91,6 @@ msgstr ""
 
 #. Name of the plugin
 msgid "LS2WP"
-msgstr ""
-
-#: includes/ls2wp-admin.php:316
-msgid "LS2WP assessemnt values of LS-surveys"
 msgstr ""
 
 #: includes/ls2wp-admin.php:9 includes/ls2wp-admin.php:19

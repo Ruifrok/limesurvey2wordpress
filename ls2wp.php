@@ -23,6 +23,12 @@ add_action('admin_enqueue_scripts', 'ls2wp_admin_style');
 	function ls2wp_admin_style() {
 		wp_enqueue_style('ls2wp_admin-styles', plugin_dir_url(__FILE__).'assets/admin-style.css');
 		wp_enqueue_script('ls2wp-admin-scripts', plugin_dir_url(__FILE__).'assets/ls2wp-admin.js', array('jquery'));
+		
+		$ls2wp_nonce = wp_create_nonce( 'ls2wp' );
+		wp_localize_script( 'ls2wp-admin-scripts', 'ls2wp', array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => $ls2wp_nonce,
+		));		
 	}
 
 add_action( 'init', 'wp2ls_load_textdomain' );
@@ -30,17 +36,17 @@ add_action( 'init', 'wp2ls_load_textdomain' );
 		load_plugin_textdomain( 'ls2wp', false, 'ls2wp/languages/' );	  
 	}
 
-$ls_url = get_option('ls_url');
+$ls_url = trailingslashit(get_option('ls_url'));
 define('LS2WP_SITEURL', $ls_url);
 
-
-add_filter('ls2wp_survey_filter_args','ls2wp_survey_filter_new_args', 5, 2);
-	function ls2wp_survey_filter_new_args($args){
+//Make tabels rpc_participants and rpc_responses on plugin activation
+register_activation_hook( __FILE__, 'make_ls2wp_tables' );
+	function make_ls2wp_tables(){
+		$resps = new Ls2wp_RPC_Responses();
+		$parts = new Ls2wp_RPC_Participants();
 		
-		//$args['survey_group_id'] = 4;
-		//$args['all_surveys'] = true;
-		
-		return $args;
+		$resps->ls2wp_create_resp_table();
+		$parts->ls2wp_create_participant_table();
 	}
 
 
@@ -51,9 +57,9 @@ add_shortcode('testfuncties', 'test_code');
 		global $lsdb;		
 		ob_start();
 
-		//$survey_id = 297532;
+		$survey_id = 297532;
 		//$survey_id = 779253;
-		$survey_id = 863694;
+		//$survey_id = 863694;
 		//$survey_id = 311591;
 		//$survey_id = 516331;
 		$token = 'Idlbjspu9WrJ9Wb';
@@ -61,9 +67,12 @@ add_shortcode('testfuncties', 'test_code');
 		$user = get_userdata(2);
 		$email = $user->user_email;		
 		
-		$test = ls2wp_ls_active_surveys($user, $add_participant = true);
-
-		print_obj(count($test));
+		$resps = new Ls2wp_RPC_Responses();
+		$parts = new Ls2wp_RPC_Participants();
+		
+		//$test = $resps->ls2wp_import_responses($survey_id);
+		$test =ls2wp_ls_active_surveys($user);
+		
 		print_obj($test);
 
 		$test1 = get_transient('test1');

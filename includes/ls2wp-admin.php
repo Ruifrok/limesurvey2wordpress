@@ -1,7 +1,7 @@
 <?php
 if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-//ls2wp settings menu page toevoegen
+//Add ls2wp settings menu page
 add_action('admin_menu', 'ls2wp_settings_page');
 	function ls2wp_settings_page() {
 
@@ -16,7 +16,14 @@ add_action('admin_menu', 'ls2wp_settings_page');
 	function ls2wp_settings_display(){
 
 		?>
-		<h1><?php _e('LS2WP settings', 'ls2wp');?></h1>		
+		<h1><?php _e('LS2WP settings', 'ls2wp');?></h1>	
+		<h2><?php _e('Introduction', 'ls2wp');?></h2>
+		<div style="width:60%">
+			<p><?php _e('It is important to understand that the concept of users in Wordpress and Limesurvey is different. In Limesurvey those who take a survey are called participants. Participant data are not stored in the Limesurvey user database. In Limesurvey users are only those who have rights to add or change surveys depending on their user rights.', 'ls2wp');?></p>
+			<p><?php _e('This plugin can only read data from the Limesurvey database or add Limesurvey partcipants to surveys. It has no functionality to add or change Limesurvey users or add or change surveys.', 'ls2wp');?></p>
+			
+			<p><?php _e('The prefered way to access Limesurvey data is to link to the Limesurvey database. It is a lot faster and more efficient. If you do not have access to the Limesurvey database, the JSON/RPC interface can be used. This is a relatively slow connection. To improve speed when using JSON/RPC, data are stored in transients. This might limit the amount of data that can be accessed.', 'ls2wp');?></p>
+		</div>		
 		
 		<form class="ls2wp-settings" action="options.php" method="post">
 			<?php
@@ -29,8 +36,54 @@ add_action('admin_menu', 'ls2wp_settings_page');
 			?>	 
 		 </form>
 		 
+		 <div class="rpc-credentials import-surveys">
+		 
+			 <?php
+			 
+			$surveys = ls2wp_get_surveys();	
+			
+			if(count($surveys) > 1){
+				usort($surveys, function ($a, $b){return strcmp($a->surveyls_title, $b->surveyls_title);});
+			}
+
+			?>
+			<form class="import-form" method="post">
+				
+				<h2><?php _e('Import survey responses and participants.', 'ls2wp');?></h2>
+
+				<p><?php _e('Retrieving data with JSON-RPC is very slow. To keep loading speeds acceptable data are stored in the database.', 'ls2wp');?></p>
+				<p><?php _e('Survey data are stored in transients with a maximum duration of 24 hours. This means it can take 24 hours before changes in the survey in Limesurvey are avilable in Wordpress', 'ls2wp')?></p>
+				<p><?php _e('Responses and participant data are stored in a database table. These data should be imported manually with the import form below. When new responses or participamts are added in Limesurvey you have to perform an new import to make them available. Incomplete responses are updated at import.', 'ls2wp');?></p>
+				<p><?php _e('The link between a wordpress user and a Limesurvey participant is his email address. A users email address is updated in Limesurvey when the wp-user email address is changed', 'ls2wp');?></p>
+				<label>
+				<?php _e('Import participants and responses of:', 'ls2wp') ?>
+				</label>
+				<select id="survey" name="survey" required>
+					<option value=""><?php _e('Select survey', 'ls2wp');?></option>
+					<?php
+					foreach($surveys as $survey) {
+						
+						$selected = (isset($_POST['survey']) && $_POST['survey'] == $survey->sid) ? 'selected' : '';
+						
+						echo '<option value="'.esc_attr($survey->sid).'" '.esc_attr($selected).'>'.esc_html($survey->surveyls_title).'('.esc_html($survey->sid).')</option>';		
+					}	
+					?>
+				</select>	
+				<?php wp_nonce_field('import survey data');?>
+				<input type="submit" id="select-import-survey" value="<?php _e('Import survey data', 'ls2wp');?>">				
+			</form>
+			
+			<?php
+			if(isset($_POST) && isset($_POST['imported'])){
+				
+				if($_POST['imported']['participants'] == 'No survey participants found.') $_POST['imported']['participants'] = 0
+				
+			?>
+			<p>Geimporteerde responses: <?php echo $_POST['imported']['responses'] ?></p>
+			<p>Geimporteerde participants: <?php echo $_POST['imported']['participants'] ?></p>
+			<?php } ?>
+		</div>
 		<?php
-		
 	}
 
 //Voeg setting secties toe
@@ -41,7 +94,7 @@ add_action( 'admin_init', 'ls2wp_admin_init' );
 		add_settings_section(
 			'survey_ids',
 			__('Basic settings', 'ls2wp'),
-			'ls2wp_uitleg_surveys',
+			'ls2wp_expl_surveys',
 			$page,
 			array('before_section' => '<div class="base-settings">', 'after_section' => '</div>'),
 			);
@@ -74,7 +127,7 @@ add_action( 'admin_init', 'ls2wp_admin_init' );
 		add_settings_section(
 			'lsdb-credentials',
 			__('Credentials for the Limesurvey database', 'ls2wp'),
-			'ls2wp_uitleg_ls_credentials',
+			'ls2wp_expl_ls_credentials',
 			$page,
 			array('before_section' => '<div class="lsdb-credentials">', 'after_section' => '</div>'),
 			);		
@@ -123,7 +176,7 @@ add_action( 'admin_init', 'ls2wp_admin_init' );
 		add_settings_section(
 			'ls-rpc-credentials',
 			__('Credentials for the Limesurvey json-rpc interface', 'ls2wp'),
-			'ls2wp_uitleg_rpc_credentials',
+			'ls2wp_expl_rpc_credentials',
 			$page,
 			array('before_section' => '<div class="rpc-credentials">', 'after_section' => '</div>'),
 			);			
@@ -150,21 +203,19 @@ add_action( 'admin_init', 'ls2wp_admin_init' );
 	}
 
 
-function ls2wp_uitleg_surveys(){
-	?>
+function ls2wp_expl_surveys(){
 	
-	
-	
+	?>	
 	<ul><?php _e('Give the following info:', 'ls2wp')?> 
-		<li><?php _e('Which surveys are available on your wordpress website. A comma separated list of survey ids', 'ls2wp');?>welke surveys beschikbaar zijn op je wordpress website. Een door komma's gescheiden lijst van survey ids.</li>
-		<li><?php _e('If you want to use the database of the Limesurvey installation', 'ls2wp');?>Of u gebruik wil maken van de database van de limesurvey installatie.</li>
-		<li>of u de json/rpc interface van limesurvey wil gebruiken</li>
+		<li><?php _e('Which surveys are made available on your wordpress website. A comma separated list of survey ids.', 'ls2wp');?></li>
+		<li><?php _e('If you want to use the database of the Limesurvey installation', 'ls2wp');?></li>
+		<li><?php _e('If you want to use the json/rpc interface of Limesurvey', 'ls2wp');?></li>
 	</ul>
 	<p></p>
 	<?php
 }
 
-function ls2wp_uitleg_ls_credentials(){
+function ls2wp_expl_ls_credentials(){
 	
 	global $lsdb;
 	
@@ -182,13 +233,15 @@ function ls2wp_uitleg_ls_credentials(){
 	if(WP_DEBUG){?>
 		
 		<div style="border:3px solid red; padding:10px;width:60%;">
-		<p>WP_DEBUG staat aan ('WP_DEBUG = true' in wp-config.php). Om te voorkomen dat u niet meer bij wp_admin kunt bij een fout in de LSDB credentials, kunt u de inputvelden niet veranderen.</p> 
-		<p>Schakel WP_DEBUG uit ('WP_DEBUG = false' in wp-config.php) om de credentials van de Limesurvey database te kunnen wijzigen!! </p>
+			<p><?php _e('WP_DEBUG is on (WP_DEBUG = true in wp-config.php). To prevent locking yourself out from wp-admin due to an error in the Limesurvey database credentials, changing the input fields is not possible.', 'ls2wp');?>WP_DEBUG staat aan ('WP_DEBUG = true' in wp-config.php). Om te voorkomen dat u niet meer bij wp-admin kunt bij een fout in de LSDB credentials, kunt u de inputvelden niet veranderen.</p> 
+			<p><?php _e('Swich off WP_DEBUG (WP_DEBUG = false in wp-config.php)to be able to change the credentials of the Limesurvey database.', 'ls2wp')?>Schakel WP_DEBUG uit ('WP_DEBUG = false' in wp-config.php) om de credentials van de Limesurvey database te kunnen wijzigen!! </p>
 		</div>
 	
 	<?php } ?>
 	<div>
-		<p>Uitleg LSDB credentials</p>
+		<p><?php _e('If Limesurvey and Wordpress are installed on the same server, you should fill in the database credentials you used installing Limesurvey.', 'ls2wp');?></p>
+		<p><?php _e('If you want to connect to a database on an other server, the hostname should be the IP-address of the server where the Limesurvey database is installed', 'ls2wp');?></p>
+		
 	</div>
 	<?php
 }
@@ -203,6 +256,7 @@ function ls2wp_survey_ids_input(){
 function ls2wp_use_rpc_input(){
 	?>	
 		<input type="checkbox" id="use_rpc" name="use_rpc" <?php if(get_option('use_rpc') == 'on') echo 'checked=true'; ?>">
+
 	
 	<?php	
 }
@@ -243,6 +297,7 @@ function ls2wp_db_host_input(){
 	
 	<?php	
 }
+
 function ls2wp_db_prefix_input(){
 	
 	$readonly = '';
@@ -253,10 +308,15 @@ function ls2wp_db_prefix_input(){
 	<?php	
 }
 
-function ls2wp_uitleg_rpc_credentials(){
+function ls2wp_expl_rpc_credentials(){
 	?>
 	<div>
-		<p>Uitleg LS json-rpc credentials</p>
+		<p><?php _e('To be able to use the JSON-RPC interface, the JSON-RPC interface should be switched on in Limesurvey and a Limesurvey user should be defined with the proper rights on the database. Take the following steps:');?></p>
+		<ol>
+			<li><?php _e('Login to your Limesurvey install and navigat to Global settings -> Interfaces and choose JSON-RPC as active interface.', 'ls2wp');?></li>
+			<li><?php _e('Navigate to Manage survey administrators. Create a user with all richts on the participant database and on surveys.', 'ls2wp');?></li>	
+			<li><?php _e('Add the credentials of this user to the fields below.', 'ls2wp');?></li>
+		</ol>
 	</div>		
 	<?php
 }
@@ -281,6 +341,15 @@ function ls2wp_ls_url_input(){
 	<?php	
 }
 
+function ls2wp_import_rpc_data(){
+	?>
+	<h1><?php _e('Import participants and responses using the JSON-RPC interface', 'ls2wp');?></h1>		
+	<?php
+	
+	echo ls2wp_form_select_survey(__('Send'), $args=array());	
+
+}
+
 //ls2wp question values submenu page toevoegen	
 add_action('admin_menu', 'ls2wp_answer_values');
 	function ls2wp_answer_values() {
@@ -288,8 +357,8 @@ add_action('admin_menu', 'ls2wp_answer_values');
 		
 		add_submenu_page(
 			'ls2wp', 
-			'Antwoordwaardes van LS-surveys', 
-			'Antwoordwaardes', 
+			__('Assessemnt values of LS-surveys', 'ls2wp'), 
+			__('Assessemnt values', 'ls2wp'), 
 			'manage_options', 
 			'ls2wp_answer_values', 
 			'ls2wp_answer_values_page',
@@ -300,10 +369,10 @@ add_action('admin_menu', 'ls2wp_answer_values');
 	
 function ls2wp_answer_values_page(){
 	?>
-	<h1>LS2WP antwoordwaardes van LS-surveys</h1>		
+	<h1><?php _e('LS2WP assessemnt values of LS-surveys', 'ls2wp');?></h1>		
 	<?php
 	
-	echo ls2wp_form_select_survey('Verzend', $args=array());
+	echo ls2wp_form_select_survey(__('Send'));
 	
 	if(isset($_GET['survey'])) {
 		
@@ -319,18 +388,9 @@ function ls2wp_answer_values_page(){
 }
 		
 //formulier voor kiezen van survey.
-function ls2wp_form_select_survey( $submit_value, $args) {
-	
-	$default = array(
-		'survey_group_id' 	=> '',
-		'all_surveys'		=> false,
-	);
-	
-	$args = wp_parse_args($args, $default);
+function ls2wp_form_select_survey($submit_value) {
 
-	$surveys = ls2wp_get_surveys();
-
-	$surveys = ls2wp_filter_surveys($surveys, $args);
+	$surveys = ls2wp_get_surveys();	
 	
 	if(count($surveys) > 1){
 		usort($surveys, function ($a, $b){return strcmp($a->surveyls_title, $b->surveyls_title);});
@@ -341,10 +401,11 @@ function ls2wp_form_select_survey( $submit_value, $args) {
 	?>
 	<form class="import-form" method="get">
 		
-		<h2>Kies een survey.</h2>		
+		<h2><?php _e('Select a survey.');?></h2>		
 		
 		<label>
-		Toon antwoordwaardes van:
+		Toon antwoordwaardes van:	
+
 		<select id="survey" name="survey" required>
 			<option value="">Kies survey</option>
 			<?php
@@ -391,6 +452,7 @@ function ls2wp_form_select_survey( $submit_value, $args) {
 			
 			$curr_scr = get_current_screen();
 			$page_name = explode('page_', $curr_scr->id)[1];
+			
 		?>
 			<input type="hidden" name="page" value="<?php echo $page_name;?>">
 		<?php 
@@ -660,8 +722,6 @@ add_action('init', 'ls2wp_save_answer_values');
 			$answer_values = array();
 			foreach($_POST as $question_code => $values) {
 				
-				//if(strstr($vraag_code, '_wp') || strstr($vraag_code, 'ak_')) continue;
-
 				if(is_array($values)){
 					foreach	($values as $key => $value){
 						$answer_values[$question_code][$key] = $value;				
@@ -677,9 +737,40 @@ add_action('init', 'ls2wp_save_answer_values');
 			
 			$answer_values = map_deep($answer_values, 'sanitize_text_field');
 			
-			//update_option($survey_id.'_vraagwaardes', $_POST);
 			if (current_user_can('manage_options')) {				
 				update_option($survey_id.'_answer_values', $answer_values);
 			}
 		}		
+	}
+
+add_action( 'wp_ajax_import_survey_data', 'import_survey_data' );
+	function import_survey_data(){
+		
+		check_ajax_referer( 'ls2wp' );
+		
+		$survey_id = $_POST['survey_id'];
+		
+		if(empty($survey_id)){
+			$ajax_response = '<div class="ajax-response"><b>Kies eerst een survey</b></div>';
+		} else {
+			
+			$resps = new Ls2wp_RPC_Responses();
+			$parts = new Ls2wp_RPC_Participants();
+			
+			$n_resps = $resps->ls2wp_import_responses($survey_id);
+			$n_parts = $parts->ls2wp_import_participants($survey_id);	
+
+			ob_start()
+			?>
+			<div class="ajax-response">
+				
+				<p>Geimporteerde responses: <?php echo $n_resps;?></p>
+				<p>Geimporteerde participants: <?php echo $n_parts;?></p>
+			</div>
+			<?php
+			$ajax_response = ob_get_clean();
+		}
+		
+		wp_send_json($ajax_response);
+		
 	}

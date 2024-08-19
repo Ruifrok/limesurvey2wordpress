@@ -26,16 +26,25 @@ add_action ('init','ls2wp_limesurvey_db', 1);
 
 //Lijst met survey id en naam van beschikbare surveys
 function ls2wp_db_get_surveys() {
-	global $lsdb;
-	//alle surveys in de database
-
-	$sql = "
-		SELECT sid, survey{$lsdb->prefix}title, startdate, expires, active, gsid, survey{$lsdb->prefix}language AS language, anonymized, datecreated, tokenlength
-		FROM {$lsdb->prefix}surveys
-		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
-		ORDER BY datecreated	
-	";
 	
+	global $lsdb;
+	
+	$id_string = get_option('ls_survey_ids');
+
+	if(empty($id_string)) return false;	
+	
+	$id_string = str_replace(",", "','", $id_string);
+
+	$sql = $lsdb->prepare("
+		SELECT sid, survey{$lsdb->prefix}title, startdate, expires, active, gsid, survey{$lsdb->prefix}language AS language, anonymized, datecreated, tokenlength
+		FROM {$lsdb->prefix}surveys		
+		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
+		WHERE sid in (%s)
+		ORDER BY datecreated	
+	", $id_string);
+	
+	$sql = stripslashes($sql);
+;	
 	$surveys = $lsdb->get_results($sql);
 	
 	return $surveys;	
@@ -45,7 +54,7 @@ function ls2wp_db_get_survey($survey_id) {
 	global $lsdb;
 	
 	$sql = $lsdb->prepare("
-		SELECT sid, gsid, survey{$lsdb->prefix}language AS language, survey{$lsdb->prefix}title, anonymized, startdate, expires, active, datecreated, tokenlength, listpublic
+		SELECT sid, gsid, survey{$lsdb->prefix}language AS language, survey{$lsdb->prefix}title, anonymized, startdate, expires, active, datecreated, tokenlength, listpublic, assessments
 		FROM {$lsdb->prefix}surveys
 		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
 		WHERE sid = %d 
@@ -74,22 +83,13 @@ function ls2wp_db_get_survey_groups(){
 }
 
 //Zoek survey_ids en tokens bij email
-function ls2wp_get_email_surveys_tokens($email, $args=array()) {
+function ls2wp_get_email_surveys_tokens($email) {
 
-	$default = array(
-		'survey_group_id' 	=> '',
-		'all_surveys'		=> false,
-	);
-	
-	$args = wp_parse_args($args, $default);	
-	
 	global $lsdb;
 	
 	if(empty($email)) return false;
 		
 	$surveys = ls2wp_db_get_surveys();
-	
-	$surveys = ls2wp_filter_surveys($surveys, $args);
 	
 	$results = array();
 	
@@ -97,8 +97,6 @@ function ls2wp_get_email_surveys_tokens($email, $args=array()) {
 		
 		$survey_id = $survey->sid;
 		
-		if(!empty($group_id) && $survey['gsid'] != $group_id) continue;
-
 		$table_name = "{$lsdb->prefix}tokens_{$survey_id}";
 		if($lsdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)continue;		
 
@@ -145,7 +143,7 @@ function ls2wp_get_token_survey_id($token) {
 	return false;
 }
 
-//Alle responsen uit een survey
+//All responses of a survey
 function ls2wp_db_get_responses_survey($survey_id){
 	global $lsdb;
 	
@@ -229,7 +227,7 @@ function ls2wp_db_get_participant_responses($email, $args=array()) {
 	return $responses;
 }
 
-//Alle responsen uit surveys met gegeven token
+//Alle responsen uit surveys met gegeven tokens
 /* function ls2wp_get_responses($survey_ids, $tokens) {
 	global $lsdb;
 	
@@ -297,16 +295,8 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	$survey_id  = reset($questions)->sid;	
 
 	$survey = ls2wp_db_get_survey($survey_id);
-	
-	if($survey->anonymized == 'N' && ls2wp_participant_table_exists($survey_id)){
-		$participant = ls2wp_db_get_participant_by_token($survey_id, $response['token']);
-		$completed = $participant->completed;
-	} else {
-		$completed = '';		
-	}
 
 	$response_nw['survey_id'] = $survey_id;
-	$response_nw['completed'] = $completed;
 	$response_nw['group_survey_id'] = $survey->gsid;
 	$response_nw['survey_title'] = $survey->surveyls_title;
 	$response_nw['datecreated'] = $survey->datecreated;
@@ -631,6 +621,8 @@ function ls2wp_db_get_participant($survey_id, $email, $add_participant = false){
 		$participant['email'] = $user->user_email;
 		$participant['language'] = $survey->language;		
 		$participant['token'] = $token;
+		
+		$participant = apply_filters('ls2wp_add_participant_properties', $participant, $survey_id, $user);
 		
 		$success = $lsdb->insert($table_name, $participant);
 		

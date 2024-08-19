@@ -86,8 +86,10 @@ function ls2wp_get_responses_survey($survey_id){
 	
 	$use_rpc = get_option('use_rpc');
 	
-	if($use_rpc) {		
-		$responses = ls2wp_rpc_get_responses_survey($survey_id);		
+	if($use_rpc) {	
+
+		$resps = new Ls2wp_RPC_Responses();
+		$responses = $resps->ls2wp_rpc_get_responses_survey($survey_id);		
 	} else {		
 		$responses = ls2wp_db_get_responses_survey($survey_id);		
 	}
@@ -100,8 +102,10 @@ function ls2wp_get_participants($survey_id, $name = ''){
 	
 	$use_rpc = get_option('use_rpc');
 	
-	if($use_rpc) {		
-		$participants = ls2wp_rpc_get_participants($survey_id, $name);
+	if($use_rpc) {
+
+		$parts = new Ls2wp_RPC_Participants();	
+		$participants = $parts->ls2wp_rpc_get_participants($survey_id, $name);
 	} else {		
 		$participants = ls2wp_db_get_participants($survey_id, $name);
 	}
@@ -115,8 +119,10 @@ function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
 	
-	if($use_rpc) {		
-		$participant = ls2wp_rpc_get_participant($survey_id, $email, $add_participant);
+	if($use_rpc) {	
+
+		$parts = new Ls2wp_RPC_Participants();
+		$participant = $parts->ls2wp_rpc_get_participant($survey_id, $email, $add_participant);
 	} else {
 
 		
@@ -132,49 +138,15 @@ function ls2wp_get_participant_responses($email, $args=array()){
 	
 	$use_rpc = get_option('use_rpc');
 	
-	if($use_rpc) {		
-		$responses = ls2wp_rpc_get_participant_responses($email, $args);
+	if($use_rpc) {
+
+		$resps = new Ls2wp_RPC_Responses();	
+		$responses = $resps->ls2wp_rpc_get_participant_responses($email, $args);
 	} else {		
 		$responses = ls2wp_db_get_participant_responses($email, $args);
 	}
 	
 	return $responses;
-}
-
-//filter surveys op survey group id en/of aangeboden surveys
-function ls2wp_filter_surveys($surveys, $args){
-
-	$args = apply_filters('ls2wp_survey_filter_args', $args);
-	
-	if(!empty($args['survey_group_id'])){
-		
-		foreach($surveys as $key => $survey){		
-			
-			if($survey->gsid != $args['survey_group_id']){
-				unset($surveys[$key]);				
-			}			
-		}
-		$surveys = array_values($surveys);		
-	}
-
-	if(!$args['all_surveys']){
-		
-		$id_string = get_option('ls_survey_ids');
-		if(!empty($id_string)) {
-
-			$survey_ids = explode( ',', $id_string);
-			
-			foreach($surveys as $key => $survey){
-				
-				if(!in_array($survey->sid, $survey_ids)){
-					unset($surveys[$key]);
-				}			
-			}			
-		}
-		$surveys = array_values($surveys);
-	}
-	
-	return $surveys;
 }
 
 //Voeg de antwoordwaardes uit de settings page toe aan response
@@ -229,7 +201,7 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 		foreach($surveys as $survey){
 			
 			if(in_array($survey->sid, $survey_ids) && $survey->active == 'Y'){
-print_obj($survey->sid);			
+			
 				$survey->url = ls2wp_get_ls_survey_url($survey->sid, $user, $add_participant);
 				
 				$survey->user_name = $user->display_name;
@@ -258,10 +230,14 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 		$new_user_email = $user->user_email;	
 		
 		if ( $new_user_email === $old_user_email ) return;
-		
+	
 		$use_rpc = get_option('use_rpc');
 		
 		if($use_rpc){
+			
+			global $wpdb;
+			
+			$parts = new Ls2wp_RPC_Participants();
 
 			$id_string = get_option('ls_survey_ids');
 			if(!empty($id_string)) $survey_ids = explode( ',', $id_string);
@@ -275,14 +251,17 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 
 			foreach($survey_ids as $survey_id){
 				
-				$participant = ls2wp_get_participant($survey_id, $user);
+				$participant = ls2wp_get_participant($survey_id, $old_user_email);
 				
+				if($participant->status) continue;
+			
 				if(!empty($participant)){
 					
 					$result = $rpc_client->set_participant_properties($s_key, $survey_id,['email' => $old_user_email],['email' => $new_user_email]);
+							
+					$wpdb->update($wpdb->prefix . 'ls2wp_rpc_participants', ['email' => $new_user_email], ['email' => $old_user_email]);
 					
-				}
-				
+				}				
 			}			
 
 			$rpc_client->release_session_key( $s_key);			
@@ -298,5 +277,6 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 					$lsdb->update($lsdb->prefix.'tokens_'.$survey_id, ['email' => $new_user_email], ['token' => $token]);
 				}					
 			}			
-		}
+		}	
+		
 	}

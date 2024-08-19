@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LS2WP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-26 08:41+0000\n"
+"POT-Creation-Date: 2024-07-26 08:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -59,7 +59,7 @@ msgstr ""
 #: includes/ls2wp-admin.php:198
 msgid ""
 "If Limesurvey and Wordpress are installed on the same server, you should "
-"fill in the database credentials you used installing Limesurvey."
+"fill in the credentials you used installing Limesurvey."
 msgstr ""
 
 #: includes/ls2wp-admin.php:167

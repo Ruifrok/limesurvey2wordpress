@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LS2WP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-05-18 07:04+0000\n"
+"POT-Creation-Date: 2024-07-16 09:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -24,24 +24,32 @@ msgstr ""
 msgid "Comma seperated list of surevey ids"
 msgstr ""
 
-#: includes/ls2wp-admin.php:68
+#: includes/ls2wp-admin.php:76
 msgid "Credentials for the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:117
+#: includes/ls2wp-admin.php:125
 msgid "Credentials for the Limesurvey json-rpc interface"
 msgstr ""
 
-#: includes/ls2wp-admin.php:157
+#: includes/ls2wp-admin.php:158
 msgid "Give the following info:"
 msgstr ""
 
-#: includes/ls2wp-admin.php:101
+#: includes/ls2wp-admin.php:109
 msgid "Hostname of the Limesurvey database"
 msgstr ""
 
 #. Author URI of the plugin
 msgid "https://ruifrok.net"
+msgstr ""
+
+#: includes/ls2wp-admin.php:160
+msgid "If you want to use the database of the Limesurvey installation"
+msgstr ""
+
+#: includes/ls2wp-admin.php:161
+msgid "If you want to use the json/rpc interface of Limesurvey"
 msgstr ""
 
 #. Description of the plugin
@@ -56,19 +64,19 @@ msgstr ""
 msgid "LS2WP settings"
 msgstr ""
 
-#: includes/ls2wp-admin.php:93
+#: includes/ls2wp-admin.php:101
 msgid "Name of the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:134
+#: includes/ls2wp-admin.php:143
 msgid "Password of the Limesurvey account"
 msgstr ""
 
-#: includes/ls2wp-admin.php:84
+#: includes/ls2wp-admin.php:92
 msgid "Password of the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:109
+#: includes/ls2wp-admin.php:117
 msgid "Prefix of the tables in the Limesurvey database"
 msgstr ""
 
@@ -80,18 +88,24 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: includes/ls2wp-admin.php:143
+#: includes/ls2wp-admin.php:60
 msgid "URL of the Limesurvey install"
 msgstr ""
 
-#: includes/ls2wp-admin.php:60
-msgid "Use the Limesurvey database"
+#: includes/ls2wp-admin.php:68
+msgid "Use the JSON-RPC interface"
 msgstr ""
 
-#: includes/ls2wp-admin.php:125
+#: includes/ls2wp-admin.php:134
 msgid "Username of the Limesurvey account"
 msgstr ""
 
-#: includes/ls2wp-admin.php:76
+#: includes/ls2wp-admin.php:84
 msgid "Username of the Limesurvey database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:159
+msgid ""
+"Which surveys are made available on your wordpress website. A comma "
+"separated list of survey ids."
 msgstr ""

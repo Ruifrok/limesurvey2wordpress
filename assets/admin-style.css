@@ -47,7 +47,8 @@
 }
 
 #answer-values,
-#select-survey{
+#select-survey,
+#select-import-survey{
 	color:white;
 	background-color:#1859f4;
 	cursor:pointer;
@@ -59,3 +60,15 @@
 	background-color:initial;	
 }
 
+.import-surveys{
+	border-top:2px solid grey;
+	padding-top:15px;
+}
+
+.import-form label{
+	display:inline-block;
+	width:200px;
+	font-size:14px;
+	font-weight:600;
+	padding:20px 10px 20px 0;
+}
