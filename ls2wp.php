@@ -57,21 +57,21 @@ add_shortcode('testfuncties', 'test_code');
 		global $lsdb;		
 		ob_start();
 
-		$survey_id = 297532;
+		//$survey_id = 297532;
 		//$survey_id = 779253;
 		//$survey_id = 863694;
 		//$survey_id = 311591;
-		//$survey_id = 516331;
-		$token = 'Idlbjspu9WrJ9Wb';
+		$survey_id = 516331;
+		$token = 'E65zJIH75guzMuC';
 		
-		$user = get_userdata(2);
+		$user = get_userdata(3);
 		$email = $user->user_email;		
 		
 		$resps = new Ls2wp_RPC_Responses();
 		$parts = new Ls2wp_RPC_Participants();
 		
-		//$test = $resps->ls2wp_import_responses($survey_id);
-		$test =ls2wp_ls_active_surveys($user);
+		//$test = ls2wp_get_ls_survey_url($survey_id, $user);
+		$test = ls2wp_get_participant_responses($email);
 		
 		print_obj($test);
 

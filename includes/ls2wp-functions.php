@@ -113,6 +113,23 @@ function ls2wp_get_participants($survey_id, $name = ''){
 	return $participants;
 }
 
+//Get an array with key:token en value: completed
+function ls2wp_tokens_completed($survey_id){
+	
+	$use_rpc = get_option('use_rpc');
+	
+	if($use_rpc) {
+
+		$resps = new Ls2wp_RPC_Responses();	
+		$token_completed = $resps->ls2wp_rpc_tokens_completed($survey_id);
+	} else {		
+		$token_completed = ls2wp_db_tokens_completed($survey_id);
+	}
+	
+	return $token_completed;
+}
+
+
 //haal ls-participantgegevens op bij email.
 //$add_participant: Als geen participant, dan een aanmaken.
 function ls2wp_get_participant($survey_id, $email, $add_participant = false){
@@ -134,19 +151,35 @@ function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 }
 
 //Alle responsen van een deelnemer
-function ls2wp_get_participant_responses($email, $args=array()){
+function ls2wp_get_participant_responses($email){
 	
 	$use_rpc = get_option('use_rpc');
 	
 	if($use_rpc) {
 
 		$resps = new Ls2wp_RPC_Responses();	
-		$responses = $resps->ls2wp_rpc_get_participant_responses($email, $args);
+		$responses = $resps->ls2wp_rpc_get_participant_responses($email);
 	} else {		
-		$responses = ls2wp_db_get_participant_responses($email, $args);
+		$responses = ls2wp_db_get_participant_responses($email);
 	}
 	
 	return $responses;
+}
+
+//Get response by token
+function ls2wp_get_response_by_token($survey_id, $token){
+
+	$use_rpc = get_option('use_rpc');
+	
+	if($use_rpc) {
+
+		$resps = new Ls2wp_RPC_Responses();	
+		$response = $resps->ls2wp_rpc_get_response_by_token($survey_id, $token);
+	} else {		
+		$response = ls2wp_db_get_response_by_token($survey_id, $token);
+	}	
+	
+	return $response;
 }
 
 //Voeg de antwoordwaardes uit de settings page toe aan response
@@ -172,19 +205,31 @@ function ls2wp_add_wp_answer_values($response){
 	return $response;
 }
 
-//Ophalen url naar nog niet ingevulde survey. Als ingevuld dan return false
+//Ophalen url naar survey. 
 function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){	
 
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
-
-	if(!is_object($participant) || empty($participant->usesleft)) return false;
 	
 	$survey_url = LS2WP_SITEURL.'index.php/'.$survey_id.'?token='.$participant->token.'&newtest=Y';
 	
 	return $survey_url;
 }
 
-//Bepaal of er een actieve en niet ingevulde survey is met gebruiker als participant
+//determine if a user has no response or incomplete response
+function ls2wp_survey_active($user, $survey_id, $add_participant = true){
+	
+	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
+	
+	$active = false;
+	
+	$response = ls2wp_get_response_by_token($survey_id, $participant->token);
+
+	if(empty($response) || empty($response['submitdate'])) $active = true;
+	
+	return $active;
+}
+
+//Bepaal of er een actieve en niet ingevulde surveys zijn met gebruiker als participant
 //Voeg survey url met token toe aan survey data 
 function ls2wp_ls_active_surveys($user, $add_participant = true){
 	
@@ -198,7 +243,7 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 		
 		$surveys = ls2wp_get_surveys();
 
-		foreach($surveys as $survey){
+		foreach($surveys as $survey){			
 			
 			if(in_array($survey->sid, $survey_ids) && $survey->active == 'Y'){
 			

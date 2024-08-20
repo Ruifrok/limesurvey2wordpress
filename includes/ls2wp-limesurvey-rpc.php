@@ -391,11 +391,15 @@ class Ls2wp_RPC_Responses {
 	}
 
 	//Get an array with key:token en value: completed from the WP response table
-	public function ls2wp_tokens_completed($survey_id){	
+	public function ls2wp_rpc_tokens_completed($survey_id){	
 			
 		$responses = $this->get_responses($survey_id);
+		
+		$token_completed = false;
 
 		foreach($responses as $response){
+			
+			if(empty($response->token)) continue;
 			
 			if(empty($response->submitdate)) $token_completed[$response->token] = 'N';
 			else $token_completed[$response->token] = $response->submitdate;
@@ -440,7 +444,6 @@ class Ls2wp_RPC_Responses {
 		return $resp_ids;
 	}
 
-
 	//get all responses of survey from responsetable in WP
 	public function get_responses($survey_id){
 		
@@ -464,6 +467,41 @@ class Ls2wp_RPC_Responses {
 		
 		return $responses;	
 	}
+
+	//get response of survey by token from responsetable in WP
+	public function ls2wp_rpc_get_response_by_token($survey_id, $token){
+		global $wpdb;
+		
+		$table_name = $this->table_name;
+		
+		$sql = $wpdb->prepare('
+			SELECT *
+			FROM '.$table_name.'
+			WHERE survey_id = %d AND token = %s	
+		', $survey_id, $token);
+
+		$response = $wpdb->get_row($sql);
+		
+		if($response){
+			
+			$fieldmap = ls2wp_get_ls_q_fieldmap($survey_id);
+
+			$survey = ls2wp_rpc_get_survey($survey_id);
+			
+			$response = $this->unserialize_questions($response);			
+			
+			$response = ['survey_title' => $survey->surveyls_title] + (array)$response;
+			
+			$response = $this->ls2wp_add_field_data($response, $fieldmap);
+			
+			$response = ls2wp_add_wp_answer_values($response);			
+			
+			return $response;
+			
+		} else return false;	
+	}		
+		
+
 
 	private function unserialize_questions($response){
 	
@@ -561,7 +599,7 @@ class Ls2wp_RPC_Responses {
 	}
 		
 	//All responses of user in the available surveys
-	public function ls2wp_rpc_get_responses_participant($email){
+	public function ls2wp_rpc_get_participant_responses($email){
 		
 		global $wpdb;
 		
@@ -780,9 +818,7 @@ class Ls2wp_RPC_Participants {
 			WHERE survey_id = %d AND email = %s	
 		', $survey_id, $email);
 
-		$participant = $wpdb->get_results($sql);
-		
-		//return $participant;
+		$participant = $wpdb->get_row($sql);
 
 		if(empty($participant)){		
 		
@@ -793,39 +829,40 @@ class Ls2wp_RPC_Participants {
 				return $s_key['status'];
 			}	
 
-			$participant = $rpc_client->get_participant_properties($s_key, $survey_id, array('email' => $email));			
-
+			$participant = (object)$rpc_client->get_participant_properties($s_key, $survey_id, array('email' => $email));
+			
 			//If no participant is found, create a new participant
-			if(empty($participant['token']) && $add_participant){
+			if($participant->status) unset($participant->status);
+			
+			if(empty($participant->token) && $add_participant){
 				
 				$survey_props = $rpc_client->get_survey_properties($s_key, $survey_id);
 				$lang = $survey_props['language'];
 				
 				$user = get_user_by('email', $email);
 				
-				$participant['firstname'] = $user->first_name;
-				$participant['lastname'] = $user->last_name;
-				$participant['email'] = $user->user_email;
-				$participant['language'] = $lang;
+				$participant->firstname = $user->first_name;
+				$participant->lastname = $user->last_name;
+				$participant->email = $user->user_email;
+				$participant->language = $lang;
 				
-				$participant_data[0] = $participant;
+				$participant_data[0] = (array)$participant;
 				
 				//new participant limesurvey database
 				$nw_participants = $rpc_client->add_participants($s_key, $survey_id, $participant_data);
 				
 				$rpc_client->release_session_key( $s_key);
 				
-				if(empty($nw_participants['status']) )$participant = $nw_participants[0];
+				if(empty($nw_participants['status']) )$participant = (object)$nw_participants[0];
 				
-
-				
-				if(empty($participant['token'])) return 'Er kon geen enquète deelnemer worden aangemaakt';
+				if(empty($participant->token)) return 'Er kon geen enquète deelnemer worden aangemaakt';
 			}
 
 			//new participant in WP participant table
 			$this->ls2wp_import_participants($survey_id);			
 			
 		}
-		return (object)$participant;
+		
+		return $participant;
 	}	
 }

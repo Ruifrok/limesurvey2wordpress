@@ -143,20 +143,60 @@ function ls2wp_get_token_survey_id($token) {
 	return false;
 }
 
-//All responses of a survey
-function ls2wp_db_get_responses_survey($survey_id){
+//All raw responses of a survey
+function ls2wp_db_get_responses($survey_id){
 	global $lsdb;
-	
-	$questions = ls2wp_db_get_questions($survey_id);
 
-	$answers = ls2wp_db_get_answers($survey_id);		
-	
 	$sql = $lsdb->prepare("
 		SELECT *
 		FROM {$lsdb->prefix}survey_%d
 	", $survey_id);	
 
-	$rows = $lsdb->get_results($sql);	
+	$rows = $lsdb->get_results($sql);
+
+	return $rows;
+	
+}
+
+//Get response by token
+function ls2wp_db_get_response_by_token($survey_id, $token){
+
+	global $lsdb;
+
+	$sql = $lsdb->prepare("
+		SELECT *
+		FROM {$lsdb->prefix}survey_%d
+		WHERE token = %s
+	", $survey_id, $token);	
+
+	$row = $lsdb->get_row($sql);
+
+	if($row){
+
+		$questions = ls2wp_db_get_questions($survey_id);
+
+		$answers = ls2wp_db_get_answers($survey_id);			
+			
+		$row = (array)$row;
+	
+		$response = ls2wp_translate_sgq_code($row, $questions, $answers);
+		$response = ls2wp_add_wp_answer_values($response);
+
+	} else return false;
+	
+	return $response;
+	
+}
+
+//All responses of a survey with assessment values and question data
+function ls2wp_db_get_responses_survey($survey_id){
+	global $lsdb;
+	
+	$rows = ls2wp_db_get_responses($survey_id);
+	
+	$questions = ls2wp_db_get_questions($survey_id);
+
+	$answers = ls2wp_db_get_answers($survey_id);		
 	
 	if($rows){
 		foreach($rows as $row){
@@ -174,18 +214,32 @@ function ls2wp_db_get_responses_survey($survey_id){
 	
 }
 
-//Alle responsen uit surveys van gegeven email
-function ls2wp_db_get_participant_responses($email, $args=array()) {
-	global $lsdb;
-	
-	$default = array(
-		'survey_group_id' 	=> '',
-		'all_surveys'		=> false,
-	);
-	
-	$args = wp_parse_args($args, $default);
 
-	$surveys = ls2wp_get_email_surveys_tokens($email, $args);
+
+//Get an array with key:token en value: completed
+function ls2wp_db_tokens_completed($survey_id){
+	
+	$responses = ls2wp_db_get_responses($survey_id);
+
+	$token_completed = false;
+
+	foreach($responses as $response){
+		
+		if(empty($response->token)) continue;
+		
+		if(empty($response->submitdate)) $token_completed[$response->token] = 'N';
+		else $token_completed[$response->token] = $response->submitdate;
+	}
+	
+	return $token_completed;		
+	
+}
+
+//Alle responsen uit surveys van gegeven email
+function ls2wp_db_get_participant_responses($email) {
+	global $lsdb;
+
+	$surveys = ls2wp_get_email_surveys_tokens($email);
 
 	$responses = array();
 	
@@ -226,67 +280,6 @@ function ls2wp_db_get_participant_responses($email, $args=array()) {
 
 	return $responses;
 }
-
-//Alle responsen uit surveys met gegeven tokens
-/* function ls2wp_get_responses($survey_ids, $tokens) {
-	global $lsdb;
-	
-	$tokens = (array)$tokens;
-	$token_str = implode("','" , $tokens);
-	
-	foreach($survey_ids as $survey_id) {
-		
-		$sql = $lsdb->prepare("
-			SELECT *
-			FROM {$lsdb->prefix}survey_%d
-			WHERE token IN ("%s")		
-		", $survey_id, $token_str);	
-		
-		$sql = stripslashes($sql);
-
-		$responses = $lsdb->get_results($sql);
-		
-		//Alle vragen in deze survey
-		$questions = ls2wp_db_get_questions($survey_id);		
-	
-		$qids = array_column($questions, 'qid');
-		
-		$answers = ls2wp_db_get_answers($qids);	
-
-		foreach($responses as $response) {
-			
-			$response_nw = ls2wp_translate_sgq_code ($response, $questions, $answers);
-			$responses_nw[] = $response_nw;			
-		}	
-	}	
-	return $responses_nw;
-} */
-
-//Alle vragen met antwoorden en beoordelingswaarde bij een token
-/* function ls2wp_get_response($token, $survey_id) {
-	global $lsdb;
-	
-	$sql = $lsdb->prepare("
-		SELECT *
-		From {$lsdb->prefix}survey_%d
-		WHERE token = %s
-	", $survey_id, $token);
-	
-	$response = $lsdb->get_row($sql);
-
-	if(!isset($response)) return array();
-
-	//Alle vragen in deze survey
-	$questions = ls2wp_db_get_questions($survey_id);
-
-	$qids = array_column($questions, 'qid');
-
-	$answers = ls2wp_db_get_answers($qids);	
-
-	$response_nw = ls2wp_translate_sgq_code ($response, $questions, $answers);
-	
-	return $response_nw;
-} */
 
 //Zet array met sgqa-code voor elke vraag om in array met als key de vraag-code en als value een sub-array met vraagkenmerken.
 //Voor sgqa-code zie https://manual.limesurvey.org/SGQA_identifier/nl en https://manual.limesurvey.org/Question_object_types
@@ -393,31 +386,6 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	}
 	return $response_nw;
 }
-
-//Maak array met alle tokens en survey_id
-/* function ls2wp_get_tokens() {
-	global $lsdb;
-	
-	$surveys = ls2wp_db_get_surveys();
-	$result = array();
-	
-	foreach($surveys as $survey) {
-				
-		$survey_id = $survey->sid;	
-		
-		$table_name = "{$lsdb->prefix}tokens_{$survey_id}";
-		if($lsdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)continue;		
-
-			$tokens = $lsdb->get_col("
-				SELECT token
-				FROM {$lsdb->prefix}tokens_{$survey_id}				
-			");
-		foreach($tokens as $token) {
-			$result[$token] = $survey_id;
-		}
-	}
-	return $result;
-} */
 
 //Zoek group_name bij groep_id (uit de vraagcode in LS) of bij gid(Limesurvey group_id) 
 function ls2wp_db_get_group_name($group_id, $sid) {
