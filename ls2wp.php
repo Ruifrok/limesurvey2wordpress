@@ -71,7 +71,7 @@ add_shortcode('testfuncties', 'test_code');
 		$parts = new Ls2wp_RPC_Participants();
 		
 		//$test = ls2wp_get_ls_survey_url($survey_id, $user);
-		$test = ls2wp_get_participant_responses($email);
+		$test = ls2wp_ls_active_surveys($user);
 		
 		print_obj($test);
 

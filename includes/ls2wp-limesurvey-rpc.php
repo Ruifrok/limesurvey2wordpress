@@ -166,6 +166,7 @@ function ls2wp_rpc_get_surveys(){
 		$id_string = get_option('ls_survey_ids');
 
 		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
+	
 		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
 
 		if(is_array($s_key)){		
@@ -173,9 +174,11 @@ function ls2wp_rpc_get_surveys(){
 		}	
 		
 		$surveys = $rpc_client->list_surveys($s_key);
+		
+		$surveys_nw = array();
 
 		foreach($surveys as $survey){
-			
+		
 			if(!str_contains($id_string, $survey['sid'])) continue;
 		
 			$props = ls2wp_rpc_get_survey_props($survey['sid']);
@@ -821,10 +824,11 @@ class Ls2wp_RPC_Participants {
 		$participant = $wpdb->get_row($sql);
 
 		if(empty($participant)){		
-		
+	
 			$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
+		
 			$s_key = $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
-
+		
 			if(is_array($s_key)){		
 				return $s_key['status'];
 			}	

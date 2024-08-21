@@ -40,9 +40,11 @@ add_action('admin_menu', 'ls2wp_settings_page');
 		 
 			 <?php
 			 
-			$surveys = ls2wp_get_surveys();	
+			$surveys = ls2wp_get_surveys();
 			
-			if(count($surveys) > 1){
+			if(empty($surveys)) $surveys = array();
+			
+			if(!empty($surveys) && count($surveys) > 1){
 				usort($surveys, function ($a, $b){return strcmp($a->surveyls_title, $b->surveyls_title);});
 			}
 
@@ -336,7 +338,7 @@ function ls2wp_rpc_passw_input(){
 
 function ls2wp_ls_url_input(){		
 	?>	
-		<input type="url" id="ls_url" name="ls_url" value="<?php echo get_option('ls_url'); ?>">
+		<input type="url" id="ls_url" name="ls_url" required value="<?php echo get_option('ls_url'); ?>">
 	
 	<?php	
 }

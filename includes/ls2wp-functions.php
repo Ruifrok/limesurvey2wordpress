@@ -210,12 +210,14 @@ function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){
 
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
 	
+	if(is_array($participant)) return false;
+
 	$survey_url = LS2WP_SITEURL.'index.php/'.$survey_id.'?token='.$participant->token.'&newtest=Y';
 	
 	return $survey_url;
 }
 
-//determine if a user has no response or incomplete response
+//determine if a user has no response or incomplete response in survey
 function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 	
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
@@ -231,7 +233,7 @@ function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 
 //Bepaal of er een actieve en niet ingevulde surveys zijn met gebruiker als participant
 //Voeg survey url met token toe aan survey data 
-function ls2wp_ls_active_surveys($user, $add_participant = true){
+/* function ls2wp_ls_active_surveys($user, $add_participant = true){
 	
 	$id_string = get_option('ls_survey_ids');
 	
@@ -263,7 +265,7 @@ function ls2wp_ls_active_surveys($user, $add_participant = true){
 	}	
 	
 	return $active_surveys;
-}
+} */
 
 //update email in Limesurvey partcipant als email in wp_user wordt aangepast
 add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
