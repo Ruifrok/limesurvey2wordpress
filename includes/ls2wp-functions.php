@@ -1,6 +1,6 @@
 <?php
 
-//Alle surveys in de LS database
+//All surveys in the LS database
 function ls2wp_get_surveys(){
 	
 	$use_rpc = get_option('use_rpc');
@@ -32,7 +32,7 @@ function ls2wp_get_survey($survey_id){
 	return $surveys;
 }
 
-//Alle vragen van een survey
+//All questions of asurvey
 function ls2wp_get_questions($survey_id){
 
 	$use_rpc = get_option('use_rpc');
@@ -48,7 +48,7 @@ function ls2wp_get_questions($survey_id){
 	return $questions;
 }
 
-//alle antwoorden met assessment value
+//all answers with assessment value
 function ls2wp_get_answers($survey_id){
 	
 	$use_rpc = get_option('use_rpc');
@@ -64,7 +64,7 @@ function ls2wp_get_answers($survey_id){
 	return $answers;	
 }
 
-//Zoek group name bij group id
+//find group name by group id
 function  ls2wp_get_group_name($group_id, $survey_id){
 	
 	$use_rpc = get_option('use_rpc');
@@ -81,7 +81,7 @@ function  ls2wp_get_group_name($group_id, $survey_id){
 	
 }
 
-//Alle responsen uit een survey
+//All responses of a survey
 function ls2wp_get_responses_survey($survey_id){
 	
 	$use_rpc = get_option('use_rpc');
@@ -97,7 +97,7 @@ function ls2wp_get_responses_survey($survey_id){
 	return $responses;
 }
 
-//Alle deelnemers aan een survey
+//All participants of a survey
 function ls2wp_get_participants($survey_id, $name = ''){
 	
 	$use_rpc = get_option('use_rpc');
@@ -113,7 +113,7 @@ function ls2wp_get_participants($survey_id, $name = ''){
 	return $participants;
 }
 
-//Get an array with key:token en value: completed
+//Get an array with key:token and value: completed
 function ls2wp_tokens_completed($survey_id){
 	
 	$use_rpc = get_option('use_rpc');
@@ -130,8 +130,8 @@ function ls2wp_tokens_completed($survey_id){
 }
 
 
-//haal ls-participantgegevens op bij email.
-//$add_participant: Als geen participant, dan een aanmaken.
+//Get ls-participant data by email.
+//$add_participant: If no participant is found, add a new participant.
 function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
@@ -150,7 +150,7 @@ function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	return $participant;
 }
 
-//Alle responsen van een deelnemer
+//All responses of a participant
 function ls2wp_get_participant_responses($email){
 	
 	$use_rpc = get_option('use_rpc');
@@ -182,7 +182,7 @@ function ls2wp_get_response_by_token($survey_id, $token){
 	return $response;
 }
 
-//Voeg de antwoordwaardes uit de settings page toe aan response
+//Add assessment values from the settings page to the response
 function ls2wp_add_wp_answer_values($response){
 	
 	$wp_answer_values = get_option($response['survey_id'].'_answer_values');
@@ -205,7 +205,7 @@ function ls2wp_add_wp_answer_values($response){
 	return $response;
 }
 
-//Ophalen url naar survey. 
+//Get url to a survey. 
 function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){	
 
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);

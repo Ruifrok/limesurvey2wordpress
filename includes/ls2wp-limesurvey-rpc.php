@@ -38,6 +38,8 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 	
 		$fields = $rpc_client->get_fieldmap($s_key, $survey_id);	
 
+		if($fields['status']) return $fields['status'];
+
 		foreach($fields as $k => $field){
 		
 			$sgq = explode('X', $field['fieldname']);
@@ -158,7 +160,7 @@ function  ls2wp_rpc_get_group_name($group_id, $survey_id){
 
 //Array with limited dataset of all surveys
 function ls2wp_rpc_get_surveys(){
-
+delete_transient('ls_surveys');
 	$surveys_nw = get_transient('ls_surveys');
 	
 	if(empty($surveys_nw)){
@@ -384,9 +386,11 @@ class Ls2wp_RPC_Responses {
 		
 		$sql = $wpdb->prepare('
 			SELECT ls_resp_id
-			FROM '.$table_name.'
+			FROM %s
 			WHERE survey_id = %s
-		', $survey_id);
+		', [$table_name, $survey_id]);
+		
+		$sql = str_replace("'", "", $sql);
 
 		$resp_ids = $wpdb->get_col($sql);		
 		
@@ -675,7 +679,6 @@ class Ls2wp_RPC_Participants {
 			tid int(8),
 			token varchar(25),
 			language varchar(5),
-            usesleft int(5),
             validfrom varchar(50),
             validuntil varchar(50),
 			attribute_1 varchar(50),
@@ -711,7 +714,7 @@ class Ls2wp_RPC_Participants {
 			return $s_key['status'];
 		}
 		
-		$atts = array('language', 'usesleft', 'validfrom', 'validuntil', 'attribute_1', 'attribute_2', 'attribute_3');
+		$atts = array('language', 'validfrom', 'validuntil', 'attribute_1', 'attribute_2', 'attribute_3');
 		
 		$participants = $rpc_client->list_participants($s_key, $survey_id, $from_ls_token_id, $to_ls_token_id, false, $atts);			
 

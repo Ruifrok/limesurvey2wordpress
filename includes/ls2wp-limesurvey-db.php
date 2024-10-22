@@ -1,7 +1,7 @@
 <?php
 if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-//Nieuw wpdb object verbonden met limesurvey database
+//New wpdb object connected witht limesurvey database
 add_action ('init','ls2wp_limesurvey_db', 1);
 	function ls2wp_limesurvey_db() {
 
@@ -24,11 +24,11 @@ add_action ('init','ls2wp_limesurvey_db', 1);
 	
 	}
 
-//Lijst met survey id en naam van beschikbare surveys
+//Array of objects containing limited set of survey data
 function ls2wp_db_get_surveys() {
 	
 	global $lsdb;
-	
+
 	$id_string = get_option('ls_survey_ids');
 
 	if(empty($id_string)) return false;	
@@ -44,12 +44,13 @@ function ls2wp_db_get_surveys() {
 	", $id_string);
 	
 	$sql = stripslashes($sql);
-;	
+	
 	$surveys = $lsdb->get_results($sql);
 	
 	return $surveys;	
 }
 
+//object containing limited set of survey data
 function ls2wp_db_get_survey($survey_id) {
 	global $lsdb;
 	
@@ -67,6 +68,7 @@ function ls2wp_db_get_survey($survey_id) {
 	}else return $survey[0];	
 }
 
+//Array containing objects with survey group data
 function ls2wp_db_get_survey_groups(){
 	global $lsdb;
 	
@@ -82,7 +84,7 @@ function ls2wp_db_get_survey_groups(){
 	} else return $survey_groups;	
 }
 
-//Zoek survey_ids en tokens bij email
+//Array with key survey id and value an array with tokens(usually only on token)
 function ls2wp_get_email_surveys_tokens($email) {
 
 	global $lsdb;
@@ -118,14 +120,14 @@ function ls2wp_get_email_surveys_tokens($email) {
 	return $results;
 }
 
-//Zoek survey_id bij token
-function ls2wp_get_token_survey_id($token) {
+//Get survey id for a token
+function ls2wp_db_get_token_survey_id($token) {
 	global $lsdb;
 	
 	$surveys = ls2wp_db_get_surveys();
 	
 	foreach($surveys as $survey) {
-		$survey_id = $survey['sid'];
+		$survey_id = $survey->sid;
 		
 		$table_name = "{$lsdb->prefix}tokens_{$survey_id}";
 		if($lsdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)continue;
@@ -143,7 +145,8 @@ function ls2wp_get_token_survey_id($token) {
 	return false;
 }
 
-//All raw responses of a survey
+//All raw responses of a survey (question key is sgq code)
+//see: https://www.limesurvey.org/manual/SGQA_identifier
 function ls2wp_db_get_responses($survey_id){
 	global $lsdb;
 
@@ -214,8 +217,6 @@ function ls2wp_db_get_responses_survey($survey_id){
 	
 }
 
-
-
 //Get an array with key:token en value: completed
 function ls2wp_db_tokens_completed($survey_id){
 	
@@ -235,7 +236,7 @@ function ls2wp_db_tokens_completed($survey_id){
 	
 }
 
-//Alle responsen uit surveys van gegeven email
+//Alle responsen belonging to email address
 function ls2wp_db_get_participant_responses($email) {
 	global $lsdb;
 
@@ -248,7 +249,7 @@ function ls2wp_db_get_participant_responses($email) {
 		$survey = ls2wp_db_get_survey($survey_id);
 		if($survey->anonymized == 'Y') continue;
 		
-		//Alle vragen in deze survey
+		//all questions in this survey
 		$questions = ls2wp_db_get_questions($survey_id);		
 
 		$qids = array_column($questions, 'qid');
@@ -281,8 +282,8 @@ function ls2wp_db_get_participant_responses($email) {
 	return $responses;
 }
 
-//Zet array met sgqa-code voor elke vraag om in array met als key de vraag-code en als value een sub-array met vraagkenmerken.
-//Voor sgqa-code zie https://manual.limesurvey.org/SGQA_identifier/nl en https://manual.limesurvey.org/Question_object_types
+//Transform array with keys sgqa-code into array with key the question-code and value a sub-array with question properties.
+//for sgqa-code see https://manual.limesurvey.org/SGQA_identifier/nl and https://manual.limesurvey.org/Question_object_types
 function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 
 	$survey_id  = reset($questions)->sid;	
@@ -296,10 +297,9 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	$response_nw['survey_title'] = $survey->surveyls_title;
 	
 
-	//Antwoordcodes uitwerken
+	//decode question codes
 	foreach ($response as $key => $answer_code) {
 		$answer = '';
-		//$vraag = '';
 		$value = '';		
 		
 		if($answer_code == 'Y') $answer = 'Ja';
@@ -307,7 +307,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 		if($answer_code == 'M') $answer = 'Man';
 		if($answer_code == 'F') $answer = 'Vrouw';
 		
-		//splits SGQ in survey_id, group_id en question
+		//split SGQ in survey_id, group_id and question
 		if(is_numeric(substr($key, 0, 2))) {
 			$sgq = explode('X', $key);
 			$group_id = $sgq[1];
@@ -315,15 +315,15 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 			
 			$group_name = ls2wp_db_get_group_name($group_id, $survey_id);
 			
-			//questiontype Equation niet meenemen
+			//remove questiontype Equation
 			if($questions[$qid]->type == '*') continue;
 	
 			$question_aid = '';
 			$question = '';
 			$subquestion = '';
 			
-			//Zet key SGQ-code om in $key vraag-code en vraag
-			//als parent_qid dan zijn er subvragen
+			//Transform SGQ-code in $key question-code en question
+			//If parent_qid exists there are subquestions
 			if($questions[$qid]->parent_qid != 0) {
 				
 				$parent_qid = $questions[$qid]->parent_qid;
@@ -339,7 +339,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 				if(isset($answers[$parent_qid][$answer_code]['value'])) $value = $answers[$parent_qid][$answer_code]['value'];
 				if(in_array($questions[$parent_qid]->type, ['A','B'])) $value = $answer_code;
 				
-			} else { //Geen subvragen
+			} else { //No subquestions
 				
 				$question_code = $questions[$qid]->title;
 				$question_title = $questions[$qid]->title;
@@ -387,7 +387,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	return $response_nw;
 }
 
-//Zoek group_name bij groep_id (uit de vraagcode in LS) of bij gid(Limesurvey group_id) 
+//Find group_name of question group_id (from the questioncode in LS) or of gid(Limesurvey group_id) 
 function ls2wp_db_get_group_name($group_id, $sid) {
 	global $lsdb;
 	
@@ -418,7 +418,7 @@ function ls2wp_db_get_group_name($group_id, $sid) {
 	
 }
 
-//Alle antwoorden en beoordelingswaarden bij question set (survey)
+//All anwers and assessment values for a question set (survey)
 function ls2wp_db_get_answers($survey_id) {
 	global $lsdb;
 
@@ -440,7 +440,7 @@ function ls2wp_db_get_answers($survey_id) {
 		ORDER BY sortorder
 	", $qids_str);
 	
-	//single quotes verwijderen
+	//Remove single quotes
 	$sql = str_replace("'", "", $sql);
 	
 	$answers = $lsdb->get_results($sql);
@@ -453,7 +453,7 @@ function ls2wp_db_get_answers($survey_id) {
 	return $result;
 }
 
-//antwoord en beoordelingswaarde bij vraag/antwoordcode
+//answer and assessment value of question/answer code
 function ls2wp_get_answer($qid, $antw) {
 	global $lsdb;
 	
@@ -469,8 +469,8 @@ function ls2wp_get_answer($qid, $antw) {
 	return $answer;
 }
 
-//Alle vragen van een survey met vraagcode en vraag
-//$sgqa: Als functie wordt gebruikt voor omzetten van de sgqa-code uit LS dient de sub-question vraagcode deel van de qid te zijn(zie https://manual.limesurvey.org/SGQA_identifier/nl) en https://manual.limesurvey.org/Question_object_types
+//All questoons of a survey with question code and question
+//$sgqa: If the function is used to translate the sgqa-code from LS, the sub-question questioncode has to be part of the qid(see https://manual.limesurvey.org/SGQA_identifier/nl) and https://manual.limesurvey.org/Question_object_types
 function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	global $lsdb;
 	$results = array();
@@ -485,12 +485,12 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	$questions = $lsdb->get_results($sql, OBJECT_K);
 
 	if($sgqa) {
-	//De sub-question vraagcode deel van de qid
+	//The sub-question questoncode is part of the qid
 		foreach($questions as $key => $question){			
 			
 			if($question->parent_qid == 0) {
 				$qcode = $question->qid;
-				//vraag toevoegen als de keuze 'anders' met tekstveld wordt getoond
+				//Add a question if the question 'others' with a textfield is shown
 				if($question->other == 'Y') {
 					
 					$question_other = new stdClass;
@@ -523,7 +523,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	return $results;		
 }
 
-//alle deelnamers aan een survey
+//all participants of a survey
 function ls2wp_db_get_participants($survey_id, $name='') {
 	global $lsdb;
 	
@@ -543,7 +543,7 @@ function ls2wp_db_get_participants($survey_id, $name='') {
 	return $participants;	
 }
 
-//Haal participant uit LS mbv token
+//Get participant from LS by token
 function ls2wp_db_get_participant_by_token($survey_id, $token){
 	global $lsdb;
 	
@@ -559,8 +559,8 @@ function ls2wp_db_get_participant_by_token($survey_id, $token){
 	
 	return $participant;	
 }
-//haal ls-participantgegevens op bij email.
-//$add_participant: Als geen participant, dan een aanmaken.
+//Get participant from LS by email.
+//$add_participant: If no participant is found, then add a new participant.
 function ls2wp_db_get_participant($survey_id, $email, $add_participant = false){
 	global $lsdb;
 	
@@ -602,7 +602,7 @@ function ls2wp_db_get_participant($survey_id, $email, $add_participant = false){
 	return $participant;	
 }
 
-//Genereer een nieuw Limesurvey token
+//Generate a new Limesurvey token
 function ls2wp_generate_token($length=15 ){
 	
     $string = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -615,7 +615,7 @@ function ls2wp_generate_token($length=15 ){
 	return $token;
 }
 
-//Bepaal of participant tabel bestaat	
+//determine if partcipant table exists	
 function ls2wp_participant_table_exists($survey_id){
 	
 	global $lsdb;

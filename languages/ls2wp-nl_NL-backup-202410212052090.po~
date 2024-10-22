@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LS2WP\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-05-16 09:55+0000\n"
-"PO-Revision-Date: 2024-10-21 20:52+0000\n"
+"PO-Revision-Date: 2024-10-21 20:51+0000\n"
 "Last-Translator: \n"
 "Language-Team: Nederlands\n"
 "Language: nl_NL\n"
@@ -272,7 +272,7 @@ msgstr "Kies een survey"
 
 #: includes/ls2wp-admin.php:346 includes/ls2wp-admin.php:372
 msgid "Send"
-msgstr "Verzend"
+msgstr ""
 
 #: includes/ls2wp-admin.php:405
 msgid "Show assessment values of: "

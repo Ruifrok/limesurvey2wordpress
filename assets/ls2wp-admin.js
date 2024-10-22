@@ -13,10 +13,6 @@ jQuery( document ).ready(function($) {
 		$('.lsdb-credentials').toggle();
 		$('.rpc-credentials').toggle();
 	});
-
-	var test = $('#select-import-survey').parent();
-	
-	//console.log(test);
 	
 	$('form.import-form').on('click', '#select-import-survey', function(){
 		
@@ -24,7 +20,7 @@ jQuery( document ).ready(function($) {
 			event.preventDefault();
 		});	
 		
-		$('.ajax-response').remove();
+		$('.import-ajax-response').remove();
 
 		var surveyId = $('#survey').val();
 
@@ -38,7 +34,7 @@ jQuery( document ).ready(function($) {
 			},
 			success : function( response ) {
 
-				$('.import-form').append(response);
+				$('.import-form').prepend(response);
 
 			}
 		});	
