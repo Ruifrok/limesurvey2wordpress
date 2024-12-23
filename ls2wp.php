@@ -18,10 +18,16 @@ include_once('includes/ls2wp-functions.php');
 include_once('includes/ls2wp-admin.php');
 include_once('includes/ls2wp-limesurvey-rpc.php');
 include_once('includes/ls2wp-limesurvey-db.php');
+include_once('includes/ls2wp-reporting.php');
+
+if(in_array( 'm-chart/m-chart.php' , apply_filters('active_plugins', get_option('active_plugins')))){ 
+	include_once('includes/ls2wp-m-chart-integration.php');
+}
+
 
 add_action('admin_enqueue_scripts', 'ls2wp_admin_style');
 	function ls2wp_admin_style() {
-		wp_enqueue_style('ls2wp_admin-styles', plugin_dir_url(__FILE__).'assets/admin-style.css');
+		wp_enqueue_style('ls2wp-admin-styles', plugin_dir_url(__FILE__).'assets/admin-style.css');
 		wp_enqueue_script('ls2wp-admin-scripts', plugin_dir_url(__FILE__).'assets/ls2wp-admin.js', array('jquery'));
 		
 		$ls2wp_nonce = wp_create_nonce( 'ls2wp' );
@@ -29,6 +35,12 @@ add_action('admin_enqueue_scripts', 'ls2wp_admin_style');
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => $ls2wp_nonce,
 		));		
+	}
+
+add_action( 'wp_enqueue_scripts', 'wp2ls_enqueue_style' );
+	function wp2ls_enqueue_style(){
+		wp_enqueue_style('ls2wp-style', plugin_dir_url(__FILE__).'assets/style.css');
+		wp_enqueue_script( 'ls2wp-charts', 'https://www.gstatic.com/charts/loader.js' );
 	}
 
 add_action( 'init', 'wp2ls_load_textdomain' );

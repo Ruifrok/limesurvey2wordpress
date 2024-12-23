@@ -30,18 +30,20 @@ function ls2wp_db_get_surveys() {
 	global $lsdb;
 
 	$id_string = get_option('ls_survey_ids');
-
-	if(empty($id_string)) return false;	
+	$gid_string = get_option('ls_survey_group_ids');
 	
-	$id_string = str_replace(",", "','", $id_string);
+	if(empty($id_string) && empty($gid_string)) return false;	
+	
+	if(empty($id_string)) $id_string = ''; else $id_string = str_replace(",", "','", $id_string);
+	if(empty($gid_string)) $gid_string = ''; else $gid_string = str_replace(",", "','", $gid_string);
 
 	$sql = $lsdb->prepare("
 		SELECT sid, survey{$lsdb->prefix}title, startdate, expires, active, gsid, survey{$lsdb->prefix}language AS language, anonymized, datecreated, tokenlength
 		FROM {$lsdb->prefix}surveys		
 		JOIN {$lsdb->prefix}surveys_languagesettings ON {$lsdb->prefix}surveys_languagesettings.survey{$lsdb->prefix}survey_id = {$lsdb->prefix}surveys.sid
-		WHERE sid in (%s)
+		WHERE sid in (%s) OR gsid in (%s)
 		ORDER BY datecreated	
-	", $id_string);
+	", $id_string, $gid_string);
 	
 	$sql = stripslashes($sql);
 	
@@ -84,7 +86,7 @@ function ls2wp_db_get_survey_groups(){
 	} else return $survey_groups;	
 }
 
-//Array with key survey id and value an array with tokens(usually only on token)
+//Array with key survey id and value an array with tokens(usually only one token)
 function ls2wp_get_email_surveys_tokens($email) {
 
 	global $lsdb;
@@ -236,50 +238,46 @@ function ls2wp_db_tokens_completed($survey_id){
 	
 }
 
-//Alle responsen belonging to email address
-function ls2wp_db_get_participant_responses($email) {
+//Response in survey belonging to email address
+function ls2wp_db_get_participant_response($survey_id, $email) {
+	
 	global $lsdb;
 
-	$surveys = ls2wp_get_email_surveys_tokens($email);
+	$participant = ls2wp_db_get_participant($survey_id, $email);
 
-	$responses = array();
+	$token = $participant->token;
 	
-	foreach($surveys as $survey_id => $tokens) {
+	$result = array();
 		
-		$survey = ls2wp_db_get_survey($survey_id);
-		if($survey->anonymized == 'Y') continue;
-		
-		//all questions in this survey
-		$questions = ls2wp_db_get_questions($survey_id);		
-
-		$qids = array_column($questions, 'qid');
-
-		$answers = ls2wp_db_get_answers($survey_id);			
+	$survey = ls2wp_db_get_survey($survey_id);
+	if($survey->anonymized == 'Y') return false;
 	
-		foreach($tokens as $token){
-		
-			$sql = $lsdb->prepare("
-				SELECT *
-				FROM {$lsdb->prefix}survey_%d
-				WHERE token = %s
-			", $survey_id, $token);
-
-			$result = $lsdb->get_results($sql);			
+	//all questions in this survey
+	$questions = ls2wp_db_get_questions($survey_id);
 	
-			if(!empty($result[0])){
-				
-				$resp = (array)$result[0];
-				
-				$response = ls2wp_translate_sgq_code ($resp, $questions, $answers);
-				
-				$response = ls2wp_add_wp_answer_values($response);
-			
-				$responses[] = $response;
-			}
-		}		
+	$answers = ls2wp_db_get_answers($survey_id);
+	
+	$sql = $lsdb->prepare("
+		SELECT *
+		FROM {$lsdb->prefix}survey_%d
+		WHERE token = %s
+	", $survey_id, $token);
+
+	$result = $lsdb->get_results($sql);
+	
+	if($lsdb->last_error) return $lsdb->last_error;
+
+	if(!empty($result[0])){
+		
+		$resp = (array)$result[0];
+		
+		$response = ls2wp_translate_sgq_code ($resp, $questions, $answers);
+		
+		$response = ls2wp_add_wp_answer_values($response);			
+		
 	}	
 
-	return $responses;
+	return $response;
 }
 
 //Transform array with keys sgqa-code into array with key the question-code and value a sub-array with question properties.
@@ -302,10 +300,10 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 		$answer = '';
 		$value = '';		
 		
-		if($answer_code == 'Y') $answer = 'Ja';
-		if($answer_code == 'N') $answer = 'Nee';
-		if($answer_code == 'M') $answer = 'Man';
-		if($answer_code == 'F') $answer = 'Vrouw';
+		if($answer_code == 'Y') $answer = __('Yes', 'ls2wp');
+		if($answer_code == 'N') $answer = __('No', 'ls2wp');
+		if($answer_code == 'M') $answer = __('Male', 'ls2wp');
+		if($answer_code == 'F') $answer = __('Female', 'ls2wp');
 		
 		//split SGQ in survey_id, group_id and question
 		if(is_numeric(substr($key, 0, 2))) {
@@ -323,7 +321,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 			$subquestion = '';
 			
 			//Transform SGQ-code in $key question-code en question
-			//If parent_qid exists there are subquestions
+			//If parent_qid exists it is a subquestion
 			if($questions[$qid]->parent_qid != 0) {
 				
 				$parent_qid = $questions[$qid]->parent_qid;
@@ -331,7 +329,8 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 				$question_title = $questions[$parent_qid]->title;
 				$question_aid = $questions[$qid]->title;
 				$question_code = $question_title.'['.$question_aid.']';
-				$question_type = $questions[$parent_qid]->type;				
+				$question_type = $questions[$parent_qid]->type;	
+				$question_relevance = $questions[$parent_qid]->relevance;	
 				$question = !empty($questions[$parent_qid]->question) ? $questions[$parent_qid]->question: ' ';
 				$subquestion = !empty($questions[$qid]->question) ? $questions[$qid]->question: ' ';
 				
@@ -345,12 +344,12 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 				$question_title = $questions[$qid]->title;
 				$question = !empty($questions[$qid]->question) ? $questions[$qid]->question: ' ';
 				$question_type = $questions[$qid]->type;
+				$question_relevance = $questions[$qid]->relevance;
 				
 				if(isset($answers[$qid][$answer_code]['answer'])) $answer = $answers[$qid][$answer_code]['answer'];
 				if(isset($answers[$qid][$answer_code]['value'])) $value = $answers[$qid][$answer_code]['value'];
 				
-				if($questions[$qid]->type == 'N') $value = intval($answer_code);
-				
+				if($questions[$qid]->type == 'N') $value = intval($answer_code);		
 				
 			}
 		} else {
@@ -375,6 +374,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 			}
 
 			$response_nw[$question_code]['type'] = $question_type;
+			$response_nw[$question_code]['relevance'] = $question_relevance;
 			$response_nw[$question_code]['title'] = $question_title;
 			$response_nw[$question_code]['aid'] = $question_aid;
 			if(isset($group_id)) $response_nw[$question_code]['gid'] = $group_id;
@@ -476,7 +476,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	$results = array();
 
 	$sql = $lsdb->prepare("
-	SELECT {$lsdb->prefix}questions.qid, parent_qid, sid, gid, type, title, other, question
+	SELECT {$lsdb->prefix}questions.qid, parent_qid, sid, gid, type, relevance,title, other, question
 	FROM {$lsdb->prefix}questions
 	JOIN {$lsdb->prefix}question_l10ns ON {$lsdb->prefix}questions.qid = {$lsdb->prefix}question_l10ns.qid
 	WHERE sid = %d
@@ -485,7 +485,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	$questions = $lsdb->get_results($sql, OBJECT_K);
 
 	if($sgqa) {
-	//The sub-question questoncode is part of the qid
+	//The sub-question questioncode is part of the qid
 		foreach($questions as $key => $question){			
 			
 			if($question->parent_qid == 0) {
@@ -621,6 +621,17 @@ function ls2wp_participant_table_exists($survey_id){
 	global $lsdb;
 	
 	$table_name = $lsdb->prefix.'tokens_'.$survey_id;	
+
+	if($lsdb->get_var( $lsdb->prepare( "SHOW TABLES LIKE %s", $table_name )) == $table_name) return $table_name;
+	else return false; 
+}
+
+//determine if response table exists	
+function ls2wp_response_table_exists($survey_id){
+	
+	global $lsdb;
+	
+	$table_name = $lsdb->prefix.'survey_'.$survey_id;	
 
 	if($lsdb->get_var( $lsdb->prepare( "SHOW TABLES LIKE %s", $table_name )) == $table_name) return $table_name;
 	else return false; 

@@ -1,6 +1,8 @@
 
+.clear-transients ul,
 .ls2wp-settings ul{
-	list-style:disc inside;
+	list-style:disc outside;
+	margin-left:20px;
 }
 
 .question-form div{
@@ -48,6 +50,7 @@
 
 #answer-values,
 #select-survey,
+#clear-transients,
 #select-import-survey{
 	color:white;
 	background-color:#1859f4;
@@ -60,11 +63,14 @@
 	background-color:initial;	
 }
 
+.clear-transients,
 .import-surveys{
 	border-top:2px solid grey;
 	padding-top:15px;
+	width:60%;
 }
 
+.clear-transient-form label,
 .import-form label{
 	display:inline-block;
 	width:200px;
@@ -73,9 +79,16 @@
 	padding:20px 10px 20px 0;
 }
 
+.delete-transients-ajax-response,
 .import-ajax-response{
 	width:600px;
 	border:2px solid #1859f4;
 	font-weight:bold;
 	padding:0 10px;
+}
+
+.ls2wp-alert{
+	border:3px solid red;
+	padding:10px;
+	width:60%;
 }

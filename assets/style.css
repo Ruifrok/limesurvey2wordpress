@@ -1,0 +1,17 @@
+
+.group-response-table{
+	font-size:12px;
+}
+
+.group-response-table th:first-of-type{
+	width:500px;
+}
+
+.group-response-table td{
+	padding:3px 8px;
+	max-width:50px;
+}
+
+.ls2wp-table-wrapper{
+	overflow:auto;
+}

@@ -1,6 +1,6 @@
 <?php
 
-//All surveys in the LS database
+//All registered surveys
 function ls2wp_get_surveys(){
 	
 	$use_rpc = get_option('use_rpc');
@@ -32,7 +32,7 @@ function ls2wp_get_survey($survey_id){
 	return $surveys;
 }
 
-//All questions of asurvey
+//All questions of a survey
 function ls2wp_get_questions($survey_id){
 
 	$use_rpc = get_option('use_rpc');
@@ -78,6 +78,21 @@ function  ls2wp_get_group_name($group_id, $survey_id){
 	}	
 	
 	return $group_name;		
+	
+}
+
+//Get array with key: group_id and value: group_name
+function  ls2wp_get_group_names($response){
+
+	foreach($response as $question){
+		
+		if(!is_array($question)) continue;
+		
+		$group_names[$question['gid']] = $question['group_name'];
+		
+	}
+	
+	return $group_names;
 	
 }
 
@@ -131,7 +146,7 @@ function ls2wp_tokens_completed($survey_id){
 
 
 //Get ls-participant data by email.
-//$add_participant: If no participant is found, add a new participant.
+//$add_participant = true: If no participant is found, add a new participant.
 function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	
 	$use_rpc = get_option('use_rpc');
@@ -150,20 +165,20 @@ function ls2wp_get_participant($survey_id, $email, $add_participant = false){
 	return $participant;
 }
 
-//All responses of a participant
-function ls2wp_get_participant_responses($email){
+//Response in survey belonging to email address
+function ls2wp_get_participant_response($survey_id, $email){
 	
 	$use_rpc = get_option('use_rpc');
 	
 	if($use_rpc) {
 
 		$resps = new Ls2wp_RPC_Responses();	
-		$responses = $resps->ls2wp_rpc_get_participant_responses($email);
+		$response = $resps->ls2wp_rpc_get_participant_response($survey_id, $email);
 	} else {		
-		$responses = ls2wp_db_get_participant_responses($email);
+		$response = ls2wp_db_get_participant_response($survey_id, $email);
 	}
 	
-	return $responses;
+	return $response;
 }
 
 //Get response by token
@@ -182,10 +197,26 @@ function ls2wp_get_response_by_token($survey_id, $token){
 	return $response;
 }
 
+function ls2wp_check_survey_ids($survey_ids){	
+
+	if(!is_array($survey_ids)) $survey_ids = (array)$survey_ids;
+	
+	$id_string = get_option('ls_survey_ids');
+	
+	$use_rpc = get_option('use_rpc');
+	
+	foreach($survey_ids as $survey_id){
+	
+		if(!str_contains($id_string, $survey_id)) return 'The survey id '.$survey_id.' is not set in the the LS2WP options';
+		
+		elseif(!$use_rpc && !ls2wp_response_table_exists($survey_id)) return 'No response table found for survey '.$survey_id.'!!';
+	}
+}
+
 //Add assessment values from the settings page to the response
 function ls2wp_add_wp_answer_values($response){
 	
-	$wp_answer_values = get_option($response['survey_id'].'_answer_values');
+	$wp_answer_values = get_option($response['survey_id'].'_answer_values');	
 
 	if(empty($wp_answer_values)) return $response;
 
@@ -198,8 +229,7 @@ function ls2wp_add_wp_answer_values($response){
 		if($question['type'] == 'M' && !empty($question['answer_code'])){
 
 			$response[$q_code]['value'] = $wp_answer_values[$question['title']][$question['aid']]['value'];
-		}
-		
+		}		
 	}	
 	
 	return $response;
@@ -231,43 +261,9 @@ function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 	return $active;
 }
 
-//Bepaal of er een actieve en niet ingevulde surveys zijn met gebruiker als participant
-//Voeg survey url met token toe aan survey data 
-/* function ls2wp_ls_active_surveys($user, $add_participant = true){
-	
-	$id_string = get_option('ls_survey_ids');
-	
-	$active_surveys = array();
 
-	if(!empty($id_string)) {
 
-		$survey_ids = explode( ',', $id_string);
-		
-		$surveys = ls2wp_get_surveys();
-
-		foreach($surveys as $survey){			
-			
-			if(in_array($survey->sid, $survey_ids) && $survey->active == 'Y'){
-			
-				$survey->url = ls2wp_get_ls_survey_url($survey->sid, $user, $add_participant);
-				
-				$survey->user_name = $user->display_name;
-				
-				if($survey->url) $active_surveys[] = $survey;
-			}
-		}
-	}
-	
-	if(count($active_surveys) > 1){
-		usort($active_surveys, function ($a, $b) {
-			return strcmp($a->surveyls_title, $b->surveyls_title);
-		});	
-	}	
-	
-	return $active_surveys;
-} */
-
-//update email in Limesurvey partcipant als email in wp_user wordt aangepast
+//update email in Limesurvey partcipant when email in wp_user is updated
 add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 	function ls2wp_check_user_email_updated( $user_id, $old_user_data ) {
 		

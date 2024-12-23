@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LS2WP\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-21 20:51+0000\n"
+"POT-Creation-Date: 2024-12-23 11:20+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -16,61 +16,103 @@ msgstr ""
 "X-Loco-Version: 2.6.9; wp-6.5.3\n"
 "X-Domain: ls2wp"
 
-#: includes/ls2wp-admin.php:315
+#: includes/ls2wp-limesurvey-rpc.php:906
+msgid "A new survey participant could not be added"
+msgstr ""
+
+#: includes/ls2wp-m-chart-integration.php:33
+msgid "Add a survey id or a comma seperated list of survey ids."
+msgstr ""
+
+#: includes/ls2wp-admin.php:453
 msgid "Add the credentials of this user to the fields below."
 msgstr ""
 
-#: includes/ls2wp-admin.php:358
+#: includes/ls2wp-admin.php:798
+msgid "Answer:"
+msgstr ""
+
+#: includes/ls2wp-admin.php:490
 msgid "Assessemnt values"
 msgstr ""
 
-#: includes/ls2wp-admin.php:357
+#: includes/ls2wp-admin.php:489
 msgid "Assessemnt values of LS-surveys"
 msgstr ""
 
-#: includes/ls2wp-admin.php:558
+#: includes/ls2wp-admin.php:696
 msgid "Assessment values for: "
 msgstr ""
 
-#: includes/ls2wp-admin.php:560
+#: includes/ls2wp-admin.php:698
 msgid "Assessment values from Limesurvey are shown below the question."
 msgstr ""
 
-#: includes/ls2wp-admin.php:562
+#: includes/ls2wp-admin.php:700
 msgid ""
 "Assessment values of yes/no questions and multiple choice questions can be "
 "added to the form and saved."
 msgstr ""
 
-#: includes/ls2wp-admin.php:92
+#: includes/ls2wp-admin.php:125
 msgid "Basic settings"
 msgstr ""
 
-#: includes/ls2wp-admin.php:101
+#: includes/ls2wp-admin.php:110
+msgid "Clear survey transients"
+msgstr ""
+
+#: includes/ls2wp-admin.php:85
+msgid "Clear transients"
+msgstr ""
+
+#: includes/ls2wp-admin.php:96
+msgid "Clear transients of:"
+msgstr ""
+
+#: includes/ls2wp-admin.php:142
+msgid "Comma seperated list of surevey group ids"
+msgstr ""
+
+#: includes/ls2wp-admin.php:134
 msgid "Comma seperated list of surevey ids"
 msgstr ""
 
-#: includes/ls2wp-admin.php:125
+#: includes/ls2wp-admin.php:166
 msgid "Credentials for the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:174
+#: includes/ls2wp-admin.php:215
 msgid "Credentials for the Limesurvey json-rpc interface"
 msgstr ""
 
-#: includes/ls2wp-admin.php:445
+#: includes/ls2wp-admin.php:759
+msgid "Default value: "
+msgstr ""
+
+#: includes/ls2wp-admin.php:581
 msgid "Do not forget to save the form!"
 msgstr ""
 
-#: includes/ls2wp-admin.php:772
+#: includes/ls2wp-limesurvey-db.php:306 includes/ls2wp-limesurvey-rpc.php:633
+msgid "Female"
+msgstr ""
+
+#: includes/ls2wp-admin.php:790
+msgid ""
+"For 5 points array or a 10 points array the assessment value is equal to the "
+"answer."
+msgstr ""
+
+#: includes/ls2wp-admin.php:918
 msgid "Geimported participants: "
 msgstr ""
 
-#: includes/ls2wp-admin.php:205
+#: includes/ls2wp-admin.php:246
 msgid "Give the following info:"
 msgstr ""
 
-#: includes/ls2wp-admin.php:158
+#: includes/ls2wp-admin.php:199
 msgid "Hostname of the Limesurvey database"
 msgstr ""
 
@@ -78,29 +120,29 @@ msgstr ""
 msgid "https://ruifrok.net"
 msgstr ""
 
-#: includes/ls2wp-admin.php:238
+#: includes/ls2wp-admin.php:304
 msgid ""
 "If Limesurvey and Wordpress are installed on the same server, you should "
 "fill in the database credentials you used installing Limesurvey."
 msgstr ""
 
-#: includes/ls2wp-admin.php:429
+#: includes/ls2wp-admin.php:565
 msgid ""
 "If there is a previous survey using the same question codes, it is possible "
 "to import these assessment values."
 msgstr ""
 
-#: includes/ls2wp-admin.php:239
+#: includes/ls2wp-admin.php:305
 msgid ""
 "If you want to connect to a database on an other server, the hostname should "
 "be the IP-address of the server where the Limesurvey database is installed"
 msgstr ""
 
-#: includes/ls2wp-admin.php:208
+#: includes/ls2wp-admin.php:250
 msgid "If you want to use the json/rpc interface of Limesurvey"
 msgstr ""
 
-#: includes/ls2wp-admin.php:431
+#: includes/ls2wp-admin.php:567
 msgid "Import assessment values of:"
 msgstr ""
 
@@ -108,7 +150,7 @@ msgstr ""
 msgid "Import participants and responses of:"
 msgstr ""
 
-#: includes/ls2wp-admin.php:343
+#: includes/ls2wp-admin.php:475
 msgid "Import participants and responses using the JSON-RPC interface"
 msgstr ""
 
@@ -120,15 +162,21 @@ msgstr ""
 msgid "Import survey responses and participants."
 msgstr ""
 
-#: includes/ls2wp-admin.php:771
+#: includes/ls2wp-admin.php:917
 msgid "Imported responses: "
+msgstr ""
+
+#: includes/ls2wp-admin.php:92
+msgid ""
+"In case text in Limesurvey has been changed, you have to clear the "
+"transients to display the new text."
 msgstr ""
 
 #: includes/ls2wp-admin.php:20
 msgid "Introduction"
 msgstr ""
 
-#: includes/ls2wp-admin.php:383
+#: includes/ls2wp-admin.php:519
 msgid "invalid survey id"
 msgstr ""
 
@@ -145,7 +193,7 @@ msgstr ""
 msgid "Load Limesurveydata to Wordpress"
 msgstr ""
 
-#: includes/ls2wp-admin.php:313
+#: includes/ls2wp-admin.php:451
 msgid ""
 "Login to your Limesurvey install and navigate to Global settings -> "
 "Interfaces and choose JSON-RPC as active interface."
@@ -155,7 +203,7 @@ msgstr ""
 msgid "LS2WP"
 msgstr ""
 
-#: includes/ls2wp-admin.php:369
+#: includes/ls2wp-admin.php:501
 msgid "LS2WP assessemnt values of LS-surveys"
 msgstr ""
 
@@ -163,36 +211,52 @@ msgstr ""
 msgid "LS2WP settings"
 msgstr ""
 
-#: includes/ls2wp-admin.php:150
+#: includes/ls2wp-limesurvey-db.php:305 includes/ls2wp-limesurvey-rpc.php:632
+msgid "Male"
+msgstr ""
+
+#: includes/ls2wp-admin.php:191
 msgid "Name of the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:314
+#: includes/ls2wp-admin.php:452
 msgid ""
 "Navigate to Manage survey administrators. Create a user with all richts on "
 "the participant database and on surveys."
 msgstr ""
 
-#: includes/ls2wp-admin.php:704
+#: includes/ls2wp-limesurvey-db.php:304 includes/ls2wp-limesurvey-rpc.php:631
+msgid "No"
+msgstr ""
+
+#: includes/ls2wp-admin.php:738
+msgid "No: "
+msgstr ""
+
+#: includes/ls2wp-admin.php:846
 msgid "Only site administrators are able to change assessment values!"
 msgstr ""
 
-#: includes/ls2wp-admin.php:192
+#: includes/ls2wp-admin.php:233
 msgid "Password of the Limesurvey account"
 msgstr ""
 
-#: includes/ls2wp-admin.php:141
+#: includes/ls2wp-admin.php:182
 msgid "Password of the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:166
+#: includes/ls2wp-admin.php:207
 msgid "Prefix of the tables in the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:240
+#: includes/ls2wp-admin.php:306
 msgid ""
 "Probably you have to grant access to this external database by the current "
 "domain in the settings of the external database"
+msgstr ""
+
+#: includes/ls2wp-admin.php:729 includes/ls2wp-admin.php:786
+msgid "Question type: "
 msgstr ""
 
 #: includes/ls2wp-admin.php:58
@@ -205,8 +269,8 @@ msgstr ""
 
 #: includes/ls2wp-admin.php:56
 msgid ""
-"Retrieving data with JSON-RPC is very slow. To keep loading speeds "
-"acceptable data are stored in the Wordpress database."
+"Retrieving data with JSON-RPC is slow. To keep loading speeds acceptable "
+"data are stored in the Wordpress database."
 msgstr ""
 
 #. Author of the plugin
@@ -217,42 +281,60 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: includes/ls2wp-admin.php:402
+#: includes/ls2wp-admin.php:902 includes/ls2wp-admin.php:942
+msgid "Select a survey!"
+msgstr ""
+
+#: includes/ls2wp-admin.php:538
 msgid "Select a survey."
 msgstr ""
 
-#: includes/ls2wp-admin.php:758
-msgid "Select a survey1"
-msgstr ""
-
-#: includes/ls2wp-admin.php:68 includes/ls2wp-admin.php:408
-#: includes/ls2wp-admin.php:433
+#: includes/ls2wp-admin.php:68 includes/ls2wp-admin.php:99
+#: includes/ls2wp-admin.php:544 includes/ls2wp-admin.php:569
 msgid "Select survey"
 msgstr ""
 
-#: includes/ls2wp-admin.php:346 includes/ls2wp-admin.php:372
+#: includes/ls2wp-admin.php:478 includes/ls2wp-admin.php:508
 msgid "Send"
 msgstr ""
 
-#: includes/ls2wp-admin.php:405
+#: includes/ls2wp-admin.php:541
 msgid "Show assessment values of: "
 msgstr ""
 
-#: includes/ls2wp-admin.php:561
+#: includes/ls2wp-admin.php:823
+msgid "Subquestions"
+msgstr ""
+
+#: includes/ls2wp-admin.php:699
 msgid "Subquestions get the assessment value of the parent question."
 msgstr ""
 
 #: includes/ls2wp-admin.php:57
 msgid ""
-"Survey data are stored in transients with a maximum duration of 24 hours. "
-"This means it can take 24 hours before changes in the survey in Limesurvey "
-"are avilable in Wordpress"
+"Survey data are stored in transients with a maximum duration of a month. "
+"This means you should clear the transients before changes in the survey in "
+"Limesurvey are avilable in Wordpress. Use the clear transients button below!"
 msgstr ""
 
-#: includes/ls2wp-admin.php:233
+#: includes/ls2wp-admin.php:299
 msgid ""
 "Swich off WP_DEBUG (WP_DEBUG = false in wp-config.php)to be able to change "
 "the credentials of the Limesurvey database."
+msgstr ""
+
+#: includes/ls2wp-admin.php:756
+msgid ""
+"The default value is the assessment value when none of the subquestions is "
+"ticked."
+msgstr ""
+
+#: includes/ls2wp-admin.php:89
+msgid ""
+"The fieldmap of a survey is stored in a transient with the name "
+"fieldmap_{survey_id}. The fieldmap is loaded witth the jSON-RPC functiom "
+"\"get_fieldmap()\". The fieldmap links the question, answer and assesment "
+"value to the question code and answer code. "
 msgstr ""
 
 #: includes/ls2wp-admin.php:59
@@ -272,11 +354,26 @@ msgid ""
 "tables."
 msgstr ""
 
-#: includes/ls2wp-admin.php:207
+#: includes/ls2wp-m-chart-integration.php:38
+msgid "The question code(title) of the question you want to display"
+msgstr ""
+
+#: includes/ls2wp-admin.php:90
+msgid ""
+"The survey properties of a survey are stored in a transient "
+"survey_props_{$survey_id}. The surveyproperties are loaded with the JSON-RPC "
+"function \"get_survey_properties()\" "
+msgstr ""
+
+#: includes/ls2wp-admin.php:955
+msgid "The transients are deleted."
+msgstr ""
+
+#: includes/ls2wp-admin.php:249
 msgid "The url to the the Limesurvey installation"
 msgstr ""
 
-#: includes/ls2wp-admin.php:428
+#: includes/ls2wp-admin.php:564
 msgid "There are no saved assessment values yet."
 msgstr ""
 
@@ -287,38 +384,56 @@ msgid ""
 "Limesurvey users or add or change surveys."
 msgstr ""
 
-#: includes/ls2wp-admin.php:311
+#: includes/ls2wp-admin.php:449
 msgid ""
 "To be able to use the JSON-RPC interface, the JSON-RPC interface should be "
 "switched on in Limesurvey and a Limesurvey user should be defined with the "
 "proper rights on the database. Take the following steps:"
 msgstr ""
 
-#: includes/ls2wp-admin.php:109
+#: includes/ls2wp-admin.php:87
+msgid ""
+"To improve speed the following data are stored in a transient with a maximum "
+"duration of a month;"
+msgstr ""
+
+#: includes/ls2wp-admin.php:150
 msgid "URL of the Limesurvey install"
 msgstr ""
 
-#: includes/ls2wp-admin.php:117
+#: includes/ls2wp-admin.php:158
 msgid "Use the JSON-RPC interface"
 msgstr ""
 
-#: includes/ls2wp-admin.php:183
+#: includes/ls2wp-admin.php:224
 msgid "Username of the Limesurvey account"
 msgstr ""
 
-#: includes/ls2wp-admin.php:133
+#: includes/ls2wp-admin.php:174
 msgid "Username of the Limesurvey database"
 msgstr ""
 
-#: includes/ls2wp-admin.php:206
-msgid ""
-"Which surveys are made available on your wordpress website. A comma "
-"separated list of survey ids."
+#: includes/ls2wp-admin.php:770 includes/ls2wp-admin.php:809
+msgid "Value: "
 msgstr ""
 
-#: includes/ls2wp-admin.php:232
+#: includes/ls2wp-admin.php:248
+msgid ""
+"Which surveys are made available on your wordpress website. A comma "
+"separated list of survey ids and/or a list of survey group ids."
+msgstr ""
+
+#: includes/ls2wp-admin.php:298
 msgid ""
 "WP_DEBUG is on (WP_DEBUG = true in wp-config.php). To prevent locking "
 "yourself out from wp-admin due to an error in the Limesurvey database "
 "credentials, changing the input fields is not possible."
+msgstr ""
+
+#: includes/ls2wp-limesurvey-db.php:303 includes/ls2wp-limesurvey-rpc.php:630
+msgid "Yes"
+msgstr ""
+
+#: includes/ls2wp-admin.php:732
+msgid "Yes: "
 msgstr ""
