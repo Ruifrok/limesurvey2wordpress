@@ -74,10 +74,7 @@ function ls2wp_db_get_survey($survey_id) {
 function ls2wp_db_get_survey_groups(){
 	global $lsdb;
 	
-	$sql = $lsdb->prepare("
-		SELECT *
-		FROM {$lsdb->prefix}surveys_groups	
-	");
+	$sql = "SELECT * FROM {$lsdb->prefix}surveys_groups";
 	
 	$survey_groups = $lsdb->get_results($sql);
 	

@@ -5,6 +5,17 @@ if( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
 add_action('init', 'ls2wp_set_ls_cred');
 	function ls2wp_set_ls_cred(){		
+
+		$use_rpc = get_option('use_rpc');
+		if(!$use_rpc) return;	
+		
+		global $ls2wp_error;
+		$ls2wp_error = new WP_Error;
+		
+		if(empty(LS2WP_SITEURL)) return;		
+		
+		global $rpc_client;
+		global $s_key;
 		
 		$ls_rpcurl = LS2WP_SITEURL.'index.php/admin/remotecontrol';
 		$ls_user_name = get_option('ls_rpc_user');
@@ -13,6 +24,42 @@ add_action('init', 'ls2wp_set_ls_cred');
 		define( 'LS2WP_RPCURL', LS2WP_SITEURL.'index.php/admin/remotecontrol'); 
 		define( 'LS2WP_USER', $ls_user_name);
 		define( 'LS2WP_PASSWORD', $ls_passw);
+		
+		$headers = @get_headers($ls_rpcurl); 
+
+		if($headers && strpos( $headers[0], '200')) { 
+		
+			global $rpc_client;
+			global $s_key;
+			
+			$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
+			$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
+
+			if(is_array($s_key) && isset($s_key['status'])){
+				
+				$ls2wp_error->add('rpc_connection_error', $s_key['status']);
+				
+			}	
+			
+		} else {
+			
+			$ls2wp_error->add('rpc_connection_error', 'The remote control url "'.$ls_rpcurl.'" is not a valid remote controll url' );
+		}
+	}
+//Release sesseion key at end of page load	
+add_action('shutdown', 'ls2wp_release_s_key');
+	function ls2wp_release_s_key(){
+		
+		$use_rpc = get_option('use_rpc');
+		
+		if($use_rpc) {		
+		
+			global $rpc_client;
+			global $s_key;
+
+			if(!empty($rpc_client)) $rpc_client->release_session_key( $s_key);
+		}
+		
 	}
 
 //fieldmap van de vragen van een survey met toevoeging van antwoordopties met assessment values
@@ -22,10 +69,10 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 		
 	if(empty($ls_fieldmap)){
 		
+		global $rpc_client;
+		global $s_key;		
+		
 		$ls_fieldmap = array();
-
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
 
 		if(is_array($s_key)){		
 			return $s_key['status'];
@@ -33,7 +80,11 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 	
 		$fields = $rpc_client->get_fieldmap($s_key, $survey_id);	
 
-		if(isset($fields['status'])) return $fields['status'];
+		if(isset($fields['status'])) {
+			
+			return false;
+			
+		}
 
 		foreach($fields as $k => $field){
 		
@@ -56,9 +107,8 @@ function ls2wp_get_ls_q_fieldmap($survey_id){
 			}			
 		}	
 
-		set_transient('fieldmap_'.$survey_id, $ls_fieldmap, MONTH_IN_SECONDS);
+		set_transient('fieldmap_'.$survey_id, $ls_fieldmap, MONTH_IN_SECONDS);		
 		
-		$rpc_client->release_session_key( $s_key);
 	}		
 			
 	return $ls_fieldmap;
@@ -169,29 +219,33 @@ function ls2wp_rpc_get_surveys(){
 	if(empty($surveys_nw)) $surveys_nw = array();
 	
 	if(count($surveys_nw) == 0){
+
+		global $rpc_client;
+		global $s_key;	
+
+		$id_string = get_option('ls_survey_ids');	
 		
-		$id_string = get_option('ls_survey_ids');
-		$survey_ids = explode(',', str_replace(' ', '', $id_string));
+		if(empty($id_string)) $survey_ids = array();
+		 else $survey_ids = explode(',', str_replace(' ', '', $id_string));
 		
 		$gid_string = get_option('ls_survey_group_ids');
-		$survey_group_ids = explode(',', str_replace(' ', '', $gid_string));
-
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-	
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
-
+		
+		if(empty($gid_string)) $survey_group_ids = array();
+		else $survey_group_ids = explode(',', str_replace(' ', '', $gid_string));
+		
 		if(is_array($s_key)){		
 			return $s_key['status'];
 		}	
-		
-		$surveys = $rpc_client->list_surveys($s_key);
+	
+		if(!empty($rpc_client))$surveys = $rpc_client->list_surveys($s_key);
+		else $surveys = array();
 		
 		$surveys_nw = array();
 
 		foreach($surveys as $survey){
 		
 			$props = ls2wp_rpc_get_survey_props($survey['sid']);
-			
+//print_obj($props);			
 			if(!in_array($survey['sid'], $survey_ids) && !in_array($props['gsid'], $survey_group_ids)) continue;		
 		
 			$survey['gsid'] = $props['gsid'];
@@ -205,8 +259,7 @@ function ls2wp_rpc_get_surveys(){
 		}
 		
 		set_transient('ls_surveys', $surveys_nw, MONTH_IN_SECONDS);
-//set_transient('test2', $surveys_nw, 900);		
-		$rpc_client->release_session_key( $s_key);		
+	
 	}
 		
 	return $surveys_nw;		
@@ -217,6 +270,8 @@ function ls2wp_rpc_get_surveys(){
 function ls2wp_rpc_get_survey($survey_id){
 	
 	$surveys = ls2wp_rpc_get_surveys();
+	
+	if(is_string($surveys)) $surveys = array();
 
 	foreach($surveys as $survey){
 		if($survey->sid == $survey_id) {			
@@ -227,52 +282,46 @@ function ls2wp_rpc_get_survey($survey_id){
 }
 
 //Array with survey groups
-/* function ls2wp_rpc_get_survey_groups(){
-
+function ls2wp_rpc_get_survey_groups(){
+	
 	$survey_groups = get_transient('ls_survey_groups');
 	
 	if(empty($survey_groups)) $survey_groups = array();
 	
 	if(count($survey_groups) == 0){
 		
-		$sgid_string = get_option('ls_survey_group_ids');
-		$survey_group_ids = explode(',', str_replace(' ', '', $sgid_string));
-
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-	
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
-
+		global $rpc_client;
+		global $s_key;			
+		
 		if(is_array($s_key)){		
 			return $s_key['status'];
 		}	
 		
 		$survey_groups = $rpc_client->list_survey_groups($s_key);
 		
-		set_transient('ls_surveys', $surveys_nw, MONTH_IN_SECONDS);
+		set_transient('ls_surveys_groups', $survey_groups, MONTH_IN_SECONDS);
 		
-		$rpc_client->release_session_key( $s_key);		
 	}
 		
 	return $survey_groups;		
 }
- */
+
 
 //Alle eigenschappen van een survey
 function ls2wp_rpc_get_survey_props($survey_id){
-	
+
 	$survey_props = get_transient('survey_props_'.$survey_id);
 	
 	if(empty($survey_props)){
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
+		
+		global $rpc_client;
+		global $s_key;
 
 		if(is_array($s_key)){		
 			return $s_key['status'];
 		}
 
 		$survey_props = $rpc_client->get_survey_properties($s_key, $survey_id);
-
-		$rpc_client->release_session_key( $s_key);
 		
 		set_transient('survey_props_'.$survey_id, $survey_props, MONTH_IN_SECONDS);
 	}
@@ -329,7 +378,10 @@ class Ls2wp_RPC_Responses {
 	}
 
 	//import reponses
-	public function ls2wp_import_responses($survey_id){		
+	public function ls2wp_import_responses($survey_id){	
+
+		global $rpc_client;
+		global $s_key;	
 
 		$ls_resp_ids = $this->get_imported_resp_ids($survey_id);
 		$incomplete_ls_resp_ids = $this->get_imported_incomplete_ls_resp_ids($survey_id);
@@ -337,18 +389,19 @@ class Ls2wp_RPC_Responses {
 		if(empty($ls_resp_ids)) $from_ls_resp_id = 1;		
 		else $from_ls_resp_id = max($ls_resp_ids) + 1;
 
-
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
-
 		if(is_array($s_key)){		
 			return $s_key['status'];
 		}
 		
 		$b64_resps = $rpc_client->export_responses($s_key, $survey_id, 'json', null, 'all', 'code', 'short', $from_ls_resp_id );
 		
-		$json_resps = base64_decode($b64_resps);
-		$responses = json_decode($json_resps, true)['responses'];	
+		if(!is_string($b64_resps)){
+			$responses = array();
+		} else {
+		
+			$json_resps = base64_decode($b64_resps);
+			$responses = json_decode($json_resps, true)['responses'];	
+		}
 		
 		if(!empty($incomplete_ls_resp_ids)){
 			
@@ -362,7 +415,6 @@ class Ls2wp_RPC_Responses {
 				$responses = array_merge($responses, $incomplete_response);
 			}
 		}
-		$rpc_client->release_session_key( $s_key);
 
 		$n = 0;
 		
@@ -739,15 +791,15 @@ class Ls2wp_RPC_Participants {
 	
 	public function ls2wp_import_participants($survey_id){
 		
+		global $rpc_client;
+		global $s_key;			
+		
 		$ls_token_ids = $this->get_imported_token_ids($survey_id);
 
 		if(empty($ls_token_ids)) $from_ls_token_id = 1;		
 		else $from_ls_token_id = max($ls_token_ids) + 1;
 		
 		$to_ls_token_id = $from_ls_token_id + 500;
-
-		$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-		$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
 
 		if(is_array($s_key)){		
 			return $s_key['status'];
@@ -758,8 +810,6 @@ class Ls2wp_RPC_Participants {
 		$participants = $rpc_client->list_participants($s_key, $survey_id, $from_ls_token_id, $to_ls_token_id, false, $atts);			
 
 		if(!empty($participants['status'])) return $participants['status'];
-		
-		$rpc_client->release_session_key( $s_key);
 
 		$n = 0;
 	
@@ -854,6 +904,8 @@ class Ls2wp_RPC_Participants {
 	public function ls2wp_rpc_get_participant($survey_id, $email, $add_participant = false){
 		
 		global $wpdb;
+		global $rpc_client;
+		global $s_key;	
 		
 		$table_name = $this->table_name;
 		
@@ -865,11 +917,7 @@ class Ls2wp_RPC_Participants {
 
 		$participant = $wpdb->get_row($sql);
 
-		if(empty($participant)){		
-	
-			$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-		
-			$s_key = $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
+		if(empty($participant)){
 		
 			if(is_array($s_key)){		
 				return $s_key['status'];
@@ -898,8 +946,6 @@ class Ls2wp_RPC_Participants {
 				
 				//new participant limesurvey database
 				$nw_participants = $rpc_client->add_participants($s_key, $survey_id, $participant_data);
-				
-				$rpc_client->release_session_key( $s_key);
 				
 				if(empty($nw_participants['status']) )$participant = (object)$nw_participants[0];
 				

@@ -30,12 +30,12 @@ function ls2wp_m_chart_data_metabox($post){
 	wp_nonce_field('save ls2wp m-chart data', '_ls2wp-nonce'); ?>
 
 	  <p>
-		<label for="ls2wp-survey-ids"><?php _e( 'Add a survey id or a comma seperated list of survey ids.', 'ls2wp'); ?></label>
+		<label for="ls2wp-survey-ids"><?php esc_html_e( 'Add a survey id or a comma seperated list of survey ids.', 'ls2wp'); ?></label>
 		<br />
 		<input class="widefat" type="text" name="ls2wp-survey-ids" id="ls2wp-survey-ids" value="<?php echo esc_attr( get_post_meta( $post->ID, 'ls2wp_survey_ids', true )); ?>" />
 	  </p>
 	  <p>
-		<label for="ls2wp-question_code"><?php _e( 'The question code(title) of the question you want to display', 'ls2wp'); ?></label>
+		<label for="ls2wp-question_code"><?php esc_html_e( 'The question code(title) of the question you want to display', 'ls2wp'); ?></label>
 		<br />
 		<input class="widefat" type="text" name="ls2wp-question-code" id="ls2wp-question-code" value="<?php echo esc_attr( get_post_meta( $post->ID, 'ls2wp_question_code', true )); ?>" size="30"/>
 	  </p>	  

@@ -48,7 +48,8 @@ add_action( 'init', 'wp2ls_load_textdomain' );
 		load_plugin_textdomain( 'ls2wp', false, 'ls2wp/languages/' );	  
 	}
 
-$ls_url = trailingslashit(get_option('ls_url'));
+$ls_url = get_option('ls_url');
+if(!empty($ls_url)) $ls_url = trailingslashit($ls_url);
 define('LS2WP_SITEURL', $ls_url);
 
 //Make tabels rpc_participants and rpc_responses on plugin activation

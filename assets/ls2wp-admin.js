@@ -4,14 +4,30 @@ jQuery( document ).ready(function($) {
 	if($($('#use_rpc')).is(':checked')){
 		$('.rpc-credentials').show();
 		$('.lsdb-credentials').hide();
+		$('.rpc-credentials .ls2wp-required input').prop('required', true);
+		$('.lsdb-credentials .ls2wp-required input').prop('required', false);
+		
 	} else {
 		$('.rpc-credentials').hide();
+		$('.rpc-credentials .ls2wp-required input').prop('required', false);
+		$('.lsdb-credentials .ls2wp-required input').prop('required', true);
 	}	
 	
-	$('#use_rpc').on('click',function(){
+	$('#use_rpc').on('click',function(){		
 		
-		$('.lsdb-credentials').toggle();
-		$('.rpc-credentials').toggle();
+		if($($('#use_rpc')).is(':checked')){
+			$('.rpc-credentials').show();
+			$('.lsdb-credentials').hide();
+			$('.rpc-credentials .ls2wp-required input').prop('required', true);
+			$('.lsdb-credentials .ls2wp-required input').prop('required', false);
+			
+		} else {
+			$('.rpc-credentials').hide();
+			$('.lsdb-credentials').show();
+			$('.rpc-credentials .ls2wp-required input').prop('required', false);
+			$('.lsdb-credentials .ls2wp-required input').prop('required', true);
+		}
+
 	});
 
 	// Import LS-data

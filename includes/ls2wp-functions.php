@@ -16,6 +16,22 @@ function ls2wp_get_surveys(){
 	return $surveys;
 }
 
+//All  survey groups
+function ls2wp_get_survey_groups(){
+	
+	$use_rpc = get_option('use_rpc');
+	
+	if($use_rpc) {		
+		$surveys = ls2wp_rpc_get_survey_groups();
+			
+	} else {		
+		$surveys = ls2wp_db_get_survey_groups();
+		
+	}
+	
+	return $surveys;
+}
+
 //Limited set of survey data
 function ls2wp_get_survey($survey_id){
 	
@@ -197,7 +213,7 @@ function ls2wp_get_response_by_token($survey_id, $token){
 	return $response;
 }
 
-function ls2wp_check_survey_ids($survey_ids){	
+/* function ls2wp_check_survey_ids($survey_ids){	
 
 	if(!is_array($survey_ids)) $survey_ids = (array)$survey_ids;
 	
@@ -211,7 +227,7 @@ function ls2wp_check_survey_ids($survey_ids){
 		
 		elseif(!$use_rpc && !ls2wp_response_table_exists($survey_id)) return 'No response table found for survey '.$survey_id.'!!';
 	}
-}
+} */
 
 //Add assessment values from the settings page to the response
 function ls2wp_add_wp_answer_values($response){
@@ -261,8 +277,6 @@ function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 	return $active;
 }
 
-
-
 //update email in Limesurvey partcipant when email in wp_user is updated
 add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 	function ls2wp_check_user_email_updated( $user_id, $old_user_data ) {
@@ -279,18 +293,14 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 		if($use_rpc){
 			
 			global $wpdb;
+			global $rpc_client;
+			global $s_key;
 			
 			$parts = new Ls2wp_RPC_Participants();
-
-			$id_string = get_option('ls_survey_ids');
-			if(!empty($id_string)) $survey_ids = explode( ',', $id_string);
 			
-			$rpc_client = new \ls2wp\jsonrpcphp\JsonRPCClient( LS2WP_RPCURL );
-			$s_key= $rpc_client->get_session_key( LS2WP_USER, LS2WP_PASSWORD );
-
-			if(is_array($s_key)){		
-				return $s_key['status'];
-			}
+			$surveys = ls2wp_get_surveys();
+			
+			$survey_ids = array_column($surveys, 'sid');
 
 			foreach($survey_ids as $survey_id){
 				
@@ -305,9 +315,7 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 					$wpdb->update($wpdb->prefix . 'ls2wp_rpc_participants', ['email' => $new_user_email], ['email' => $old_user_email]);
 					
 				}				
-			}			
-
-			$rpc_client->release_session_key( $s_key);			
+			}
 			
 		} else {
 		
