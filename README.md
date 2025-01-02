@@ -51,3 +51,5 @@ To improve speed the following data are stored in a transient with a maximum dur
 + The available survey groups are stored in a transient "ls_survey_groups" as an array of objects.
 
 In case text in Limesurvey has been changed, you have to clear the transients to display the new text.
+
+# Assessment values
