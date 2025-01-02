@@ -1,5 +1,4 @@
-
-Introduction
+#Introduction
 
 The main pupose of this plugin is to import data from a Limesurvey install or to add Limesurvey participants. In addition some work is done on reporting.
 
