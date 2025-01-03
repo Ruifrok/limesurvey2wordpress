@@ -213,22 +213,6 @@ function ls2wp_get_response_by_token($survey_id, $token){
 	return $response;
 }
 
-/* function ls2wp_check_survey_ids($survey_ids){	
-
-	if(!is_array($survey_ids)) $survey_ids = (array)$survey_ids;
-	
-	$id_string = get_option('ls_survey_ids');
-	
-	$use_rpc = get_option('use_rpc');
-	
-	foreach($survey_ids as $survey_id){
-	
-		if(!str_contains($id_string, $survey_id)) return 'The survey id '.$survey_id.' is not set in the the LS2WP options';
-		
-		elseif(!$use_rpc && !ls2wp_response_table_exists($survey_id)) return 'No response table found for survey '.$survey_id.'!!';
-	}
-} */
-
 //Add assessment values from the settings page to the response
 function ls2wp_add_wp_answer_values($response){
 	
@@ -251,7 +235,8 @@ function ls2wp_add_wp_answer_values($response){
 	return $response;
 }
 
-//Get url to a survey. 
+//Get url to a survey for a wordpress user. 
+//If no participant is found for this user add this user as a participant.
 function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){	
 
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
@@ -263,7 +248,7 @@ function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){
 	return $survey_url;
 }
 
-//determine if a user has no response or incomplete response in survey
+//determine if a wordpress user has no response or incomplete response in survey
 function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 	
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
@@ -277,7 +262,7 @@ function ls2wp_survey_active($user, $survey_id, $add_participant = true){
 	return $active;
 }
 
-//update email in Limesurvey partcipant when email in wp_user is updated
+//update email address in Limesurvey partcipant when email in wp_user is updated
 add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 	function ls2wp_check_user_email_updated( $user_id, $old_user_data ) {
 		

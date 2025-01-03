@@ -419,7 +419,7 @@ function ls2wp_survey_group_ids_input(){
 function validate_survey_group_ids($survey_group_id_string){
 	
 	global $lsdb;
-set_transient('test1', $survey_group_id_string, 900);	
+
 	$old_survey_group_id_string = get_option('ls_survey_group_ids');
 
 	$survey_group_ids = explode(',', str_replace(' ', '', $survey_group_id_string));	
@@ -436,7 +436,7 @@ set_transient('test1', $survey_group_id_string, 900);
 	} elseif(!empty($survey_group_id_string)) {
 		
 		$db_survey_groups = ls2wp_db_get_survey_groups();
-set_transient('test2', $old_survey_group_id_string, 900);		
+		
 		if(!$db_survey_groups) $db_survey_groups = array();
 		
 		$db_survey_group_ids = array_column($db_survey_groups, 'gsid');
@@ -553,7 +553,7 @@ function ls2wp_expl_rpc_credentials(){
 		<p><?php esc_html_e('To be able to use the JSON-RPC interface, the JSON-RPC interface should be switched on in Limesurvey and a Limesurvey user should be defined with the proper rights on the database. Take the following steps:', 'ls2wp');?></p>
 		<ol>
 			<li><?php esc_html_e('Login to your Limesurvey install and navigate to Global settings -> Interfaces and choose JSON-RPC as active interface.', 'ls2wp');?></li>
-			<li><?php esc_html_e('Navigate to Manage survey administrators. Create a user with at least all richts on the participant database and on surveys.', 'ls2wp');?></li>	
+			<li><?php esc_html_e('Navigate to Manage survey administrators. Create a user with at least all rights on the participant database and on surveys.', 'ls2wp');?></li>	
 			<li><?php esc_html_e('Add the credentials of this user to the fields below.', 'ls2wp');?></li>
 		</ol>
 	</div>		

@@ -245,7 +245,7 @@ function ls2wp_rpc_get_surveys(){
 		foreach($surveys as $survey){
 		
 			$props = ls2wp_rpc_get_survey_props($survey['sid']);
-//print_obj($props);			
+		
 			if(!in_array($survey['sid'], $survey_ids) && !in_array($props['gsid'], $survey_group_ids)) continue;		
 		
 			$survey['gsid'] = $props['gsid'];
