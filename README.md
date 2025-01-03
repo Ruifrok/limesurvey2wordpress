@@ -53,3 +53,53 @@ To improve speed the following data are stored in a transient with a maximum dur
 In case text in Limesurvey has been changed, you have to clear the transients to display the new text.
 
 # Assessment values
+Select a survey on the wp-admin page "Assessment values". It will hows the assessment values you enterd in Limesusurvey for the slected survey.  
+For two question types, Multiplechoice(question type M) and Yes/No(questiontype Y) it is made possible to add additional assessment values.
+There are use cases where you want to differentate the assessment value of different subquestions. For thes questiontypes a form is added where you can fill in the desired assessment value.
+For Multiplechoice(question type M) a offset or default value can be added. The default value is the assessment value when none of the subquestions is ticked.
+
+# How to use the plugin
+All functions that can be used independant of the way you connect to Limesurvey are located in the file includes/functions.php.
+
+## To get responses
++ ls2wp_get_responses_survey($survey_id)  
+  Gets all completed responses of a survey.
++ ls2wp_get_participant_response($survey_id, $email)  
+  Gets a response in survey by email address.
++ ls2wp_get_response_by_token($survey_id, $token)  
+  Get response in survey by token.
+
+Each response has the following format.  
+In the example only the data for one question are shown. All other questions of the survey will be in the actual response in the same format.
+<pre>
+Array
+  (
+      [survey_id] => 734171
+      [group_survey_id] => 4
+      [survey_title] => Survey title
+      [datecreated] => 2024-12-20 09:39:14
+      [id] => 1
+      [token] => sy54GHX0CO3aMbQ
+      [submitdate] => 2024-12-20 09:56:26
+      [lastpage] => 4
+      [startlanguage] => nl
+      [seed] => 1573415794
+      [startdate] => 2024-12-20 09:54:50
+      [datestamp] => 2024-12-20 09:56:26
+      [STR01[SQ001]] => Array
+          (
+              [answer_code] => AO07
+              [answer] => 7
+              [value] => 4
+              [type] => F
+              [relevance] => 1
+              [title] => STR01
+              [aid] => SQ001
+              [gid] => 353
+              [group_name] => Question group name
+              [question] => Question text
+              [subquestion] => Subquestion text
+          )
+</pre>
+
+## Participants
