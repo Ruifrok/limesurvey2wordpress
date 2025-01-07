@@ -2,7 +2,7 @@
 
 The main pupose of this plugin is to import data from a Limesurvey install or to add Limesurvey participants. In addition some work is done on reporting.
 
-It is important to understand that the concept of users in WordPress and Limesurvey is different. In Limesurvey those who take a survey are called participants. Participant data are not stored in the Limesurvey user database. In Limesurvey users are only those who have rights to add or change surveys depending on their user rights.
+It is important to understand that the concept of users in WordPress and Limesurvey is different. In Limesurvey those who take a survey are called participants. Participant data are not stored in the Limesurvey user database. In Limesurvey users are only those who have rights to add or edit surveys depending on their user rights.
 
 This plugin can only read data from the Limesurvey database or add Limesurvey partcipants to surveys. It has no functionality to add or change Limesurvey users or add or change surveys.
 
@@ -115,7 +115,7 @@ Wordpress users can be added to a survey participant(token) tabele depending on 
   Returns an object with participant properties.  
   If $add_paticipant is set to true and no participant is found, the function will add a participant to the Limesurvey participant(token) table of the given survey_id.
 + ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true)  
-  Returns a url, that opens the survey for the given wordpress user.  
+  Returns a url, that opens the survey for the given wordpress user. The link is identical to the link when a participant is invited from limesurvey by email. This offers the possibility start a survey by loged-in users of your wordpress site.
   If no participant is found for the users email, a participant will be added to the Limesurvey participant(token) table of the given survey_id.
 
 When a users email address is changed in Wordpress the email address will be changed in limesurvey.
@@ -124,11 +124,11 @@ The returned partcipant object has the following properties:
 ```
 		stdClass Object
 (
-    [id] => 124
-    [survey_id] => 734171
-    [firstname] => Henk
-    [lastname] => van Dalen
-    [email] => henkd@test.nl
+    [id] => 123
+    [survey_id] => 123456
+    [firstname] => firstname
+    [lastname] => lastname
+    [email] => name@test.nl
     [tid] => 2
     [token] => zQS29QzLQzjIykN
     [language] => nl
@@ -154,3 +154,9 @@ To add additional participant properties to the Limesurvey participant following
 ```
 apply_filters('ls2wp_add_participant_properties', $participant, $survey_id, $user);
 ```
+#Reporting
+The plugin offers some limeted possibilities for reporting survey results. These should regarded as examples how to use the the data. Depending your specific use case you can add your own functionality.
+
+## Tables
+
+
