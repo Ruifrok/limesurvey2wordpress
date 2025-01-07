@@ -154,9 +154,38 @@ To add additional participant properties to the Limesurvey participant following
 ```
 apply_filters('ls2wp_add_participant_properties', $participant, $survey_id, $user);
 ```
-#Reporting
-The plugin offers some limeted possibilities for reporting survey results. These should regarded as examples how to use the the data. Depending your specific use case you can add your own functionality.
+# Reporting
+The plugin offers some limeted possibilities for reporting survey results. These should regarded as examples how to use the the data. Depending your specific use case you should add your own functionality.  
+There are two filterhooks added to add or remove columns to/from the table.
 
 ## Tables
 
+Two tables can be used to view Limesurvey results. The table cab be redered by either echoing the two functions below or by using a shortcode.
+### Functions
++ ls2wp_make_resp_grptable($survey_ids, $group, $email)
+  Presents the response data of a questeion group for one participant. For each question or subquestion the answer is given with the assessment value between brackets.
+  In the case of a multiplechoice question the Assessmet value of the main question is given as the sum of the assessment values of the subquestions and the default value(offset).
+  $survey_ids: an array of survey_ids or a single survey_id.  
+  $group: The group name of a question group.  
+  $email: The email address of the participant.  
++ ls2wp_make_survey_grptable($survey_ids, $group)
+  Presents the the response data of a question group for all responses. For each question or subquestion the mean of the assessment values is presented.
+  In case of multiplechoise question the mean of the assessment values of the main question is given and for each subquestion the number times this question is ticked.  
+  $survey_ids: an array of syrvey_ids or a single survey_id.  
+  $group: The group name of a question group.
+
+### Filterhooks
++ apply_filters('ls2wp_table_labels', $labels, $response, $group);
+  Can be used to add or remove table labels(columns).
++ apply_filters('ls2wp_response_table_data', $group_data, $response, $group);
+  Can be used to add or change table data.  
+
+### Shortcodes
+These shortcode cab be used to ouput the two functions.
++ [ls2wpresptable surveyids="" groupname="" email=""].  
+  Renderes s2wp_make_resp_grptable($survey_ids, $group, $email). The attributes are required.  
++ [ls2wpsurveytable surveyids="" groupname=""].  
+  Renders ls2wp_make_survey_grptable($survey_ids, $group). The attributes are required.
+
+## Charts
 
