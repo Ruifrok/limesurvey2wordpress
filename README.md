@@ -118,7 +118,7 @@ Wordpress users can be added to a survey participant(token) tabele depending on 
   Returns a url, that opens the survey for the given wordpress user. The link is identical to the link when a participant is invited from limesurvey by email. This offers the possibility start a survey by loged-in users of your wordpress site.
   If no participant is found for the users email, a participant will be added to the Limesurvey participant(token) table of the given survey_id. If yoy don't want to add a participant set `$add_participant` to `false`.
 
-** When a users email address is changed in Wordpress the email address will be changed in limesurvey. **
+**When a users email address is changed in Wordpress the email address will be changed in limesurvey.**
 
 The returned partcipant object has the following properties:
 ```
