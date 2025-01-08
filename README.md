@@ -186,12 +186,12 @@ Two tables can be used to view Limesurvey results. The table cab be redered by e
 ### Shortcodes
 These shortcode can be used to ouput the two functions.
 + `[ls2wpresptable surveyids="" groupname="" email=""]`.  
-  Renders `ls2wp_make_resp_grptable($survey_ids, $group, $email)`. The attributes are required.
+  Renders `ls2wp_make_resp_grptable($survey_ids, $group, $email)`. The attributes are required.  
   surveyids: a comma seperated string of survey ids.  
   groupname: the name of the question group.  
   email: the emailadress of the participant
 + `[ls2wpsurveytable surveyids="" groupname=""]`.  
-  Renders `ls2wp_make_survey_grptable($survey_ids, $group)`. The attributes are required.
+  Renders `ls2wp_make_survey_grptable($survey_ids, $group)`. The attributes are required.  
   surveyids: a comma seperated string of survey ids.
   groupname: the name of the question group.   
 
