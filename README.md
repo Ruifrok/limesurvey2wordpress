@@ -44,14 +44,14 @@ Responses and participant data are stored in a database table. These data should
 The link between a wordpress user and a Limesurvey participant is his email address. A participant email address is updated in Limesurvey when the wp-user email address is changed.
 
 ### Clear transients
-To improve speed the following data are stored in a transient with a maximum duration of a month;
+To improve speed when using the JSON-RPC inteface the following data are stored in a transient with a maximum duration of a month;
 
 + The fieldmap of a survey is stored in a transient with the name `fieldmap_{survey_id}`. The fieldmap is loaded witth the jSON-RPC functiom `get_fieldmap()`. The fieldmap links the question, answer and assesment value to the question code and answer code.
 + The survey properties of a survey are stored in a transient `'survey_props_{$survey_id}'`. The surveyproperties are loaded with the JSON-RPC function `get_survey_properties()`.
 + The available surveys are stored in a transient `'ls_surveys'`  as an array of objects with a limeted set of properties.
 + The available survey groups are stored in a transient `'ls_survey_groups'`  as an array of objects.
 
-In case text in Limesurvey has been changed, you have to clear the transients to display the new text.
+In case text in Limesurvey has been changed, you have to clear the transients to display the new text immediately.
 
 # Assessment values
 Select a survey on the wp-admin page "Assessment values". It will hows the assessment values you enterd in Limesusurvey for the slected survey.  
@@ -196,22 +196,10 @@ These shortcode can be used to ouput the two functions.
   groupname: the name of the question group.   
 
 ## Charts
-Question results can be presented in a bar chart. The chart gives en frequency distribution of the answers.
+Question results can be presented in a bar chart. The chart gives en frequency distribution of the answers.  
 
-+ Using Google charts
 + Using the M-chart plugin
-
-### Google charts
-This shortcode can be used to output a googlecharts bar or column chart:
-```
-[ls2wpgooglecolumnchart surveyids="" questioncode="" direction = "column"]
-```
-surveyids: a comma seperated string of survey ids.  
-questioncode: the questioncode of the displayed question.
-
-**Important. Replace square brackets in question codes by curly braces!!! Wordpress does not accept square brackets in shortcodes.**  
-
-direction: 'column' vertical (default) or 'bar' horizontal.
++ Using Google charts
 
 ### M-chart
 Install [M-chart](https://wordpress.org/plugins/m-chart/) and activate it.
@@ -228,5 +216,19 @@ M chart creates a custom post type to store chart data. Limesurvey2wordpress wil
 + add surveyid(s) and question code in the "Ls2wp data" metabox.
 
  Add the chart to a page by using the shortcode or by using the m chart block and selecting the desired chart.
+ 
+### Google charts
+This shortcode can be used to output a googlecharts bar or column chart:
+```
+[ls2wpgooglecolumnchart surveyids="" questioncode="" direction = "column"]
+```
+surveyids: a comma seperated string of survey ids.  
+questioncode: the questioncode of the displayed question.
+
+**Important. Replace square brackets in question codes by curly braces!!! Wordpress does not accept square brackets in shortcodes.**  
+
+direction: 'column' vertical (default) or 'bar' horizontal.
+
+
 
 
