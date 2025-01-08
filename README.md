@@ -12,7 +12,8 @@ The prefered way to access Limesurvey data is to link to the Limesurvey database
 ## Basic settings
 
 Give the following info:
-  + Which surveys are made available on your wordpress website. A comma separated list of survey ids and/or a list of survey group ids. 
+  + Which surveys are made available on your wordpress website. A comma separated list of survey ids.
+  + A list of survey group ids made available on your wordpress website. All surveys in a survey group will be available.
   + The url to the the Limesurvey installation.
   + If you want to use the json/rpc interface of Limesurvey.
 
