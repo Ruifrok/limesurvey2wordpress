@@ -45,10 +45,10 @@ The link between a wordpress user and a Limesurvey participant is his email addr
 ### Clear transients
 To improve speed the following data are stored in a transient with a maximum duration of a month;
 
-+ The fieldmap of a survey is stored in a transient with the name "fieldmap_{survey_id}". The fieldmap is loaded witth the jSON-RPC functiom "get_fieldmap()". The fieldmap links the question, answer and assesment value to the question code and answer code.
-+ The survey properties of a survey are stored in a transient "survey_props_{$survey_id}". The surveyproperties are loaded with the JSON-RPC function "get_survey_properties()"
-+ The available surveys are stored in a transient "ls_surveys" as an array of objects with a limeted set of properties.
-+ The available survey groups are stored in a transient "ls_survey_groups" as an array of objects.
++ The fieldmap of a survey is stored in a transient with the name `fieldmap_{survey_id}`. The fieldmap is loaded witth the jSON-RPC functiom `get_fieldmap()`. The fieldmap links the question, answer and assesment value to the question code and answer code.
++ The survey properties of a survey are stored in a transient `'survey_props_{$survey_id}'`. The surveyproperties are loaded with the JSON-RPC function `get_survey_properties()`.
++ The available surveys are stored in a transient `'ls_surveys'`  as an array of objects with a limeted set of properties.
++ The available survey groups are stored in a transient `'ls_survey_groups'`  as an array of objects.
 
 In case text in Limesurvey has been changed, you have to clear the transients to display the new text.
 
@@ -63,11 +63,11 @@ All functions that can be used independent of the way you connect to Limesurvey 
 
 ## To get responses
 The following function can be used to get reponses from Limesurvey
-+ ls2wp_get_responses_survey($survey_id)  
++ `ls2wp_get_responses_survey($survey_id)`  
   Returns an array of all completed responses of a survey.
-+ ls2wp_get_participant_response($survey_id, $email)  
++ `ls2wp_get_participant_response($survey_id, $email)`  
   Returns a response in the given $survey_id by email address.
-+ ls2wp_get_response_by_token($survey_id, $token)  
++ `ls2wp_get_response_by_token($survey_id, $token)`  
   Returns a response in the given $surve_id by token.
 
 Each response is an associative array with the following format.  
@@ -109,16 +109,16 @@ Array
 The following functions related to Limesurvey participants are available.  
 Wordpress users can be added to a survey participant(token) tabele depending on the setting of the parameter $add_participant.
 
-+ ls2wp_get_participants($survey_id, $name = '')  
++ `ls2wp_get_participants($survey_id, $name = '')`  
   Returns an array of subjects with all participants of a survey if only a survey id is given. If the optional $name is used only participants with the given string in firstname or lastname are returned.
-+ ls2wp_get_participant($survey_id, $email, $add_participant = false)  
++ `ls2wp_get_participant($survey_id, $email, $add_participant = false)`  
   Returns an object with participant properties.  
-  If $add_paticipant is set to true and no participant is found, the function will add a participant to the Limesurvey participant(token) table of the given survey_id.
-+ ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true)  
+  If `$add_paticipant` is set to true and no participant is found, the function will add a participant to the Limesurvey participant(token) table of the given survey_id.
++ `ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true)`  
   Returns a url, that opens the survey for the given wordpress user. The link is identical to the link when a participant is invited from limesurvey by email. This offers the possibility start a survey by loged-in users of your wordpress site.
-  If no participant is found for the users email, a participant will be added to the Limesurvey participant(token) table of the given survey_id.
+  If no participant is found for the users email, a participant will be added to the Limesurvey participant(token) table of the given survey_id. If yoy don't want to add a participant set `$add_participant` to `false`.
 
-When a users email address is changed in Wordpress the email address will be changed in limesurvey.
+** When a users email address is changed in Wordpress the email address will be changed in limesurvey. **
 
 The returned partcipant object has the following properties:
 ```
@@ -199,4 +199,6 @@ Question results can be presented in a bar chart. The chart gives en frequency d
 + Using the M-chart plugin
 
 ### Google charts
-This shortcode can be used to output 
+This shortcode can be used to output a googlecharts bar or column chart:
+
+
