@@ -174,18 +174,29 @@ Two tables can be used to view Limesurvey results. The table cab be redered by e
   $survey_ids: an array of syrvey_ids or a single survey_id.  
   $group: The group name of a question group.
 
-### Filterhooks
+### Filter hooks
 + apply_filters('ls2wp_table_labels', $labels, $response, $group);
   Can be used to add or remove table labels(columns).
 + apply_filters('ls2wp_response_table_data', $group_data, $response, $group);
   Can be used to add or change table data.  
 
 ### Shortcodes
-These shortcode cab be used to ouput the two functions.
+These shortcode can be used to ouput the two functions.
 + [ls2wpresptable surveyids="" groupname="" email=""].  
-  Renderes s2wp_make_resp_grptable($survey_ids, $group, $email). The attributes are required.  
+  Renders ls2wp_make_resp_grptable($survey_ids, $group, $email). The attributes are required.
+  surveyids: a comma seperated string of survey ids.  
+  groupname: the name of the question group.  
+  email: the emailadress of the participant
 + [ls2wpsurveytable surveyids="" groupname=""].  
   Renders ls2wp_make_survey_grptable($survey_ids, $group). The attributes are required.
+  surveyids: a comma seperated string of survey ids.
+  groupname: the name of the question group.   
 
 ## Charts
+Question results can be presented in a bar chart. The chart gives en frequency distribution of the answers.
 
++ Using Google charts
++ Using the M-chart plugin
+
+### Google charts
+This shortcode can be used to output 
