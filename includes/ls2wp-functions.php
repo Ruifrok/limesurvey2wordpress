@@ -64,7 +64,7 @@ function ls2wp_get_questions($survey_id){
 	return $questions;
 }
 
-//all answers with assessment value
+//all answers with assessment values
 function ls2wp_get_answers($survey_id){
 	
 	$use_rpc = get_option('use_rpc');
@@ -80,7 +80,7 @@ function ls2wp_get_answers($survey_id){
 	return $answers;	
 }
 
-//find group name by group id
+//find question group name by group id
 function  ls2wp_get_group_name($group_id, $survey_id){
 	
 	$use_rpc = get_option('use_rpc');

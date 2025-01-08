@@ -42,13 +42,13 @@ function ls2wp_labels_question_group($response, $group){
 	return $labels;
 }
 
-//Array with all values in single reponse table row. Key is q_code; value is array(anwer, value)
+//Array with all values in single reponse table row. Key is q_code; value is an array(title, type, anwer, value)
 function ls2wp_data_q_group($response, $group){
 	
-	$grp_data = array();
+	$group_data = array();
 
 	$survey_id = $response['survey_id'];
-	
+
 	$answer_values = get_option($survey_id.'_answer_values');
 	
 	$labels = ls2wp_labels_question_group($response, $group);
@@ -120,17 +120,18 @@ function ls2wp_make_resp_grptable($survey_ids, $group, $email){
 		$s_data = array();
 		
 		$response = ls2wp_get_participant_response($survey_id, $email);
-			
+				
 		if(empty($q_labels)){
 			$q_labels = ls2wp_labels_question_group($response, $group);
 			
 			$labels['survey'] = 'Survey';		
 
 			$labels = array_merge($labels, $q_labels);
+			
 		}			
 
 		$s_data = ls2wp_data_q_group($response, $group);
-	
+
 		$title['survey_title']['value'] = $response['survey_title'];		
 		
 		$s_data = array_merge($title, $s_data);
@@ -205,7 +206,7 @@ add_shortcode('ls2wpresptable', 'ls2wp_response_table');
 
 	}
 
-//Array with all values in survey table row. Key is q_code; value is array(answer, value)
+//Array with all values in survey table row. Key is q_code; value is array(n_answer, value_sum, answer)
 function ls2wp_data_survey($responses, $group){
 	
 	$survey_data = array();
@@ -243,9 +244,6 @@ function ls2wp_data_survey($responses, $group){
 		}
 		
 	}	
-			
-		//filter to change table data for survey group table
-		$survey_data = apply_filters('ls2wp_survey_table_data', $survey_data, $responses, $group);
 		
 	return $survey_data;	
 }
@@ -395,7 +393,7 @@ function ls2wp_labels_question($survey_id, $question_title){
 	return $labels;
 }
 
-
+//Add data to the tabel labels
 function ls2wp_chart_data_survey($responses, $q_code){
 	
 	$survey_id = $responses[0]['survey_id'];
@@ -506,7 +504,7 @@ function ls2wp_g_graphs_data($survey_ids, $q_code){
 	
 }
 
-//Make a google chsrts column chart(vertical) or bar chart(horizontal)
+//Make a google charts column chart(vertical) or bar chart(horizontal)
 function ls2wp_google_column_chart($data, $title, $direction){
 
 	$id = 'column-'.uniqid();

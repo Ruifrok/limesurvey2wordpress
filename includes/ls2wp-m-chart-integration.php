@@ -8,7 +8,7 @@ add_action('add_meta_boxes_m-chart', 'ls2wp_m_chart_metabox');
 		add_meta_box('ls2wp', 'Ls2wp data', 'ls2wp_m_chart_data_metabox', 'm-chart', 'normal', 'core');			
 		
 	}
-
+//Save the data from the metabox
 add_action('save_post', 'save_ls2wp_m_chart_meta');
 	function save_ls2wp_m_chart_meta($post_id){
 		
@@ -24,7 +24,7 @@ add_action('save_post', 'save_ls2wp_m_chart_meta');
 		update_post_meta($post_id, 'ls2wp_question_code', $q_code);
 	}
 
-
+//HTML forr the metabox
 function ls2wp_m_chart_data_metabox($post){
 	
 	wp_nonce_field('save ls2wp m-chart data', '_ls2wp-nonce'); ?>

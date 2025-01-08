@@ -286,7 +286,7 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 	$survey = ls2wp_db_get_survey($survey_id);
 
 	$response_nw['survey_id'] = $survey_id;
-	$response_nw['group_survey_id'] = $survey->gsid;
+	$response_nw['gsid'] = $survey->gsid;
 	$response_nw['survey_title'] = $survey->surveyls_title;
 	$response_nw['datecreated'] = $survey->datecreated;
 	$response_nw['survey_title'] = $survey->surveyls_title;

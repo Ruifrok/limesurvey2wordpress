@@ -314,12 +314,14 @@ function ls2wp_expl_surveys(){
 		
 		$survey_group_ids = explode(',', str_replace(' ', '', $survey_group_id_string));
 
-		foreach($survey_group_ids as $survey_group_id){
-			
-			if(!in_array($survey_group_id, $gsids) && !empty($survey_group_id_string)){
-			echo '<div class="ls2wp-alert">No results found for survey group id '.esc_html($survey_group_id).'. Check if the survey group exists and if the survey_group_id is correct<br></div> ';
+		if(!empty($gsids)){
+			foreach($survey_group_ids as $survey_group_id){
+				
+				if(!in_array($survey_group_id, $gsids) && !empty($survey_group_id_string)){
+				echo '<div class="ls2wp-alert">No results found for survey group id '.esc_html($survey_group_id).'. Check if the survey group exists and if the survey_group_id is correct<br></div> ';
+				}
 			}
-		}		
+		}			
 	} else {		
 		
 		$sid_errors = get_settings_errors('ls_survey_ids');
