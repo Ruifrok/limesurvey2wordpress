@@ -383,21 +383,27 @@ function ls2wp_survey_ids_input(){
 }
 function validate_survey_ids($survey_id_string){
 	
+set_transient('test1', $_POST, 900);	
+		
 	global $lsdb;
-	
-	if(empty($lsdb)) return '';
 	
 	$old_survey_id_string = get_option('ls_survey_ids');
 	
 	$use_rpc = get_option('use_rpc');
 	
-	$survey_ids = explode(',', str_replace(' ', '', $survey_id_string));	
+	$survey_ids = explode(',', str_replace(' ', '', $survey_id_string));
+
+	$use_rpc = false;
+	
+	if(isset($_POST['use_rpc'])) $use_rpc = sanitize_text_field($_POST['use_rpc']);	
 	
 	if($use_rpc){
 		
 		if($old_survey_id_string != $survey_id_string) delete_transient('ls_surveys');
 	
 	} elseif(!empty($survey_id_string)){
+		
+		if(empty($lsdb)) return $survey_id_string;
 
 		foreach($survey_ids as $survey_id){
 			
@@ -421,16 +427,16 @@ function ls2wp_survey_group_ids_input(){
 	<?php	
 }
 function validate_survey_group_ids($survey_group_id_string){
-	
-	global $lsdb;
-	
-	if(empty($lsdb)) return '';
+
+	global $lsdb;	
 
 	$old_survey_group_id_string = get_option('ls_survey_group_ids');
 
 	$survey_group_ids = explode(',', str_replace(' ', '', $survey_group_id_string));	
 	
-	$use_rpc = get_option('use_rpc');
+	$use_rpc = false;
+	
+	if(isset($_POST['use_rpc'])) $use_rpc = sanitize_text_field($_POST['use_rpc']);
 	
 	if($use_rpc){
 		
@@ -440,6 +446,8 @@ function validate_survey_group_ids($survey_group_id_string){
 		}
 		
 	} elseif(!empty($survey_group_id_string)) {
+		
+		if(empty($lsdb)) return $survey_group_id_string;
 		
 		$db_survey_groups = ls2wp_db_get_survey_groups();
 		
