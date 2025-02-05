@@ -263,6 +263,8 @@ function ls2wp_db_get_participant_response($survey_id, $email) {
 	$result = $lsdb->get_results($sql);
 	
 	if($lsdb->last_error) return $lsdb->last_error;
+	
+	$response = array();
 
 	if(!empty($result[0])){
 		

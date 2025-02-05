@@ -383,8 +383,6 @@ function ls2wp_survey_ids_input(){
 }
 function validate_survey_ids($survey_id_string){
 	
-set_transient('test1', $_POST, 900);	
-		
 	global $lsdb;
 	
 	$old_survey_id_string = get_option('ls_survey_ids');
