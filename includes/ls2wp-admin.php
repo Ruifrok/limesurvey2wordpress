@@ -858,14 +858,14 @@ function ls2wp_survey_answer_values_form($qav) {
 									<input 
 									type="number" 
 									id="<?php echo esc_attr($question['title'].'-y'); ?>" 
-									name="<?php echo esc_attr($question['title']);?>[ja]" 
-									value="<?php if(isset($answer_values[$question['title']]['ja'])) echo esc_attr($answer_values[$question['title']]['ja']);?>">
+									name="<?php echo esc_attr($question['title']);?>[Y]" 
+									value="<?php if(isset($answer_values[$question['title']]['Y'])) echo esc_attr($answer_values[$question['title']]['Y']);?>">
 									<label for="<?php echo esc_attr($question['title'].'-n');?>"><?php esc_html_e('No: ', 'ls2wp');?></label>
 									<input 
 									type="number" 
 									id="<?php echo esc_attr($question['title'].'-n');?>" 
-									name="<?php echo esc_attr($question['title']);?>[nee]" 
-									value="<?php if(isset($answer_values[$question['title']]['nee'])) echo esc_attr($answer_values[$question['title']]['nee']);?>">
+									name="<?php echo esc_attr($question['title']);?>[N]" 
+									value="<?php if(isset($answer_values[$question['title']]['N'])) echo esc_attr($answer_values[$question['title']]['N']);?>">
 							</fieldset>
 							<?php }
 							

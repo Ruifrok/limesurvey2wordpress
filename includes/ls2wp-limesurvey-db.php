@@ -128,9 +128,8 @@ function ls2wp_db_get_token_survey_id($token) {
 	foreach($surveys as $survey) {
 		$survey_id = $survey->sid;
 		
-		$table_name = "{$lsdb->prefix}tokens_{$survey_id}";
-		if($lsdb->get_var("SHOW TABLES LIKE '$table_name'") != $table_name)continue;
-		
+		if(!ls2wp_participant_table_exists($survey_id)) continue;
+	
 		$sql = $lsdb->prepare("
 			SELECT tid
 			FROM {$lsdb->prefix}tokens_%d
@@ -138,7 +137,7 @@ function ls2wp_db_get_token_survey_id($token) {
 		", $survey_id, $token);
 
 		$tid = $lsdb->get_var($sql);
-		
+			
 		if(!empty($tid)) return $survey_id;		
 	}
 	return false;
@@ -421,34 +420,40 @@ function ls2wp_db_get_group_name($group_id, $sid) {
 function ls2wp_db_get_answers($survey_id) {
 	global $lsdb;
 
-	$questions = ls2wp_get_questions($survey_id, false);
+	$result = wp_cache_get($survey_id.'_answers');
 	
-	$qids = array_column($questions, 'qid');
+	if($result == false){
 
-	if(empty($qids)) return array();
-	
-	$result = array();
-	
-	$qids_str = implode(',', $qids);
-	
-	$sql = $lsdb->prepare("
-		SELECT {$lsdb->prefix}answers.qid, code ,answer, assessment_value, sortorder
-		FROM {$lsdb->prefix}answers
-		JOIN {$lsdb->prefix}answer_l10ns ON {$lsdb->prefix}answers.aid = {$lsdb->prefix}answer_l10ns.aid
-		WHERE {$lsdb->prefix}answers.qid IN (%s)
-		ORDER BY sortorder
-	", $qids_str);
-	
-	//Remove single quotes
-	$sql = str_replace("'", "", $sql);
-	
-	$answers = $lsdb->get_results($sql);
+		$questions = ls2wp_get_questions($survey_id, false);
+		
+		$qids = array_column($questions, 'qid');
 
-	foreach($answers as $answer) {
-		$result[$answer->qid][$answer->code]['answer'] = $answer->answer;
-		$result[$answer->qid][$answer->code]['value'] = $answer->assessment_value;
-	}
-	
+		if(empty($qids)) return array();
+		
+		$result = array();
+		
+		$qids_str = implode(',', $qids);
+		
+		$sql = $lsdb->prepare("
+			SELECT {$lsdb->prefix}answers.qid, code ,answer, assessment_value, sortorder
+			FROM {$lsdb->prefix}answers
+			JOIN {$lsdb->prefix}answer_l10ns ON {$lsdb->prefix}answers.aid = {$lsdb->prefix}answer_l10ns.aid
+			WHERE {$lsdb->prefix}answers.qid IN (%s)
+			ORDER BY sortorder
+		", $qids_str);
+		
+		//Remove single quotes
+		$sql = str_replace("'", "", $sql);
+		
+		$answers = $lsdb->get_results($sql);
+
+		foreach($answers as $answer) {
+			$result[$answer->qid][$answer->code]['answer'] = $answer->answer;
+			$result[$answer->qid][$answer->code]['value'] = $answer->assessment_value;
+		}
+		
+		wp_cache_set($survey_id.'_answers', $result);
+	}	
 	return $result;
 }
 
@@ -472,53 +477,60 @@ function ls2wp_get_answer($qid, $antw) {
 //$sgqa: If the function is used to translate the sgqa-code from LS, the sub-question questioncode has to be part of the qid(see https://manual.limesurvey.org/SGQA_identifier/nl) and https://manual.limesurvey.org/Question_object_types
 function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 	global $lsdb;
-	$results = array();
+	
+	$results = wp_cache_get($survey_id.'_questions');
+	
+	if($results == false){
+	
+		$results = array();
 
-	$sql = $lsdb->prepare("
-	SELECT {$lsdb->prefix}questions.qid, parent_qid, sid, gid, type, relevance,title, other, question
-	FROM {$lsdb->prefix}questions
-	JOIN {$lsdb->prefix}question_l10ns ON {$lsdb->prefix}questions.qid = {$lsdb->prefix}question_l10ns.qid
-	WHERE sid = %d
-	", $survey_id
-	);
-	$questions = $lsdb->get_results($sql, OBJECT_K);
+		$sql = $lsdb->prepare("
+		SELECT {$lsdb->prefix}questions.qid, parent_qid, sid, gid, type, relevance,title, other, question
+		FROM {$lsdb->prefix}questions
+		JOIN {$lsdb->prefix}question_l10ns ON {$lsdb->prefix}questions.qid = {$lsdb->prefix}question_l10ns.qid
+		WHERE sid = %d
+		", $survey_id
+		);
+		$questions = $lsdb->get_results($sql, OBJECT_K);
 
-	if($sgqa) {
-	//The sub-question questioncode is part of the qid
-		foreach($questions as $key => $question){			
-			
-			if($question->parent_qid == 0) {
-				$qcode = $question->qid;
-				//Add a question if the question 'others' with a textfield is shown
-				if($question->other == 'Y') {
-					
-					$question_other = new stdClass;
-					
-					$question_other->qid = $qcode;
-					$question_other->parent_qid = $qcode;
-					$question_other->sid = $question->sid;
-					$question_other->gid = $question->gid;
-					$question_other->type = 'T';
-					$question_other->title = 'other';
-					$question_other->other = 'N';
-					$question_other->question = 'Anders';					
-					
-					$results[$qcode.'other'] = $question_other;
-				}				
-			} else {
-				$qcode = $question->parent_qid.$question->title;
+		if($sgqa) {
+		//The sub-question questioncode is part of the qid
+			foreach($questions as $key => $question){			
+				
+				if($question->parent_qid == 0) {
+					$qcode = $question->qid;
+					//Add a question if the question 'others' with a textfield is shown
+					if($question->other == 'Y') {
+						
+						$question_other = new stdClass;
+						
+						$question_other->qid = $qcode;
+						$question_other->parent_qid = $qcode;
+						$question_other->sid = $question->sid;
+						$question_other->gid = $question->gid;
+						$question_other->type = 'T';
+						$question_other->title = 'other';
+						$question_other->other = 'N';
+						$question_other->question = 'Anders';					
+						
+						$results[$qcode.'other'] = $question_other;
+					}				
+				} else {
+					$qcode = $question->parent_qid.$question->title;
+				}
+				$results[$qcode] = $question;
+
 			}
-			$results[$qcode] = $question;
+		} elseif(!empty($questions)) {	
 
+			foreach($questions as $key => $question){
+				$qcode = $question->qid;
+				$results[$qcode] = $question;
+			}
 		}
-	} elseif(!empty($questions)) {	
-
-		foreach($questions as $key => $question){
-			$qcode = $question->qid;
-			$results[$qcode] = $question;
-		}
+		
+		wp_cache_set($survey_id.'_questions', $results);
 	}
-
 	return $results;		
 }
 

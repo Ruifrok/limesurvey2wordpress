@@ -216,7 +216,9 @@ function ls2wp_get_response_by_token($survey_id, $token){
 //Add assessment values from the settings page to the response
 function ls2wp_add_wp_answer_values($response){
 	
-	$wp_answer_values = get_option($response['survey_id'].'_answer_values');	
+	$wp_answer_values = get_option($response['survey_id'].'_answer_values');
+
+	$wp_answer_values = apply_filters('modify_wp_answer_values', $wp_answer_values, $response);
 
 	if(empty($wp_answer_values)) return $response;
 
@@ -225,6 +227,12 @@ function ls2wp_add_wp_answer_values($response){
 		if(!is_array($question)) continue;
 	
 		if(empty($wp_answer_values[$question['title']])) continue;
+		
+		if($question['type'] == 'Y' && !empty($question['answer_code'])){
+			
+			$response[$q_code]['value'] = $wp_answer_values[$question['title']][$question['answer_code']];
+			
+		}
 		
 		if($question['type'] == 'M' && !empty($question['answer_code'])){
 

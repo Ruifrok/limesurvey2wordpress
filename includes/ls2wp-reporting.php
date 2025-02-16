@@ -26,12 +26,12 @@ function ls2wp_labels_question_group($response, $group){
 		
 		if(!empty($wp_answer_values[$data['title']]['default'])) $labels[$data['title']] = $labels[$data['title']].'(default='.$wp_answer_values[$data['title']]['default'].')';
 		
-		$labels[$q_code] = $data['subquestion'];		
+		if(!empty($data['subquestion'])) $labels[$q_code] = $data['subquestion'];		
 	}
 	//If only one subquestion is present, remove the label for the main question
 	foreach($n_subq as $k => $n){
 		
-		if($n <= 1) unset($labels[$k]);
+		if($n = 1) unset($labels[$k]);
 	}
 
 	ksort($labels);
