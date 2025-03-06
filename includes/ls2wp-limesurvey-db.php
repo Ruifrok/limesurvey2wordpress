@@ -240,6 +240,8 @@ function ls2wp_db_get_participant_response($survey_id, $email) {
 	global $lsdb;
 
 	$participant = ls2wp_db_get_participant($survey_id, $email);
+	
+	if(!$participant) return false;
 
 	$token = $participant->token;
 	
@@ -347,7 +349,10 @@ function ls2wp_translate_sgq_code ($response, $questions, $answers) {
 				if(isset($answers[$qid][$answer_code]['answer'])) $answer = $answers[$qid][$answer_code]['answer'];
 				if(isset($answers[$qid][$answer_code]['value'])) $value = $answers[$qid][$answer_code]['value'];
 				
-				if($questions[$qid]->type == 'N') $value = intval($answer_code);		
+				if($questions[$qid]->type == 'N'){
+					$value = floatval($answer_code);
+					$answer_code = floatval($answer_code);
+				}					
 				
 			}
 		} else {
@@ -473,15 +478,11 @@ function ls2wp_get_answer($qid, $antw) {
 	return $answer;
 }
 
-//All questoons of a survey with question code and question
+//All questions of a survey with question code and question
 //$sgqa: If the function is used to translate the sgqa-code from LS, the sub-question questioncode has to be part of the qid(see https://manual.limesurvey.org/SGQA_identifier/nl) and https://manual.limesurvey.org/Question_object_types
 function ls2wp_db_get_questions($survey_id, $sgqa=true) {
-	global $lsdb;
-	
-	$results = wp_cache_get($survey_id.'_questions');
-	
-	if($results == false){
-	
+	global $lsdb;	
+
 		$results = array();
 
 		$sql = $lsdb->prepare("
@@ -528,9 +529,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 				$results[$qcode] = $question;
 			}
 		}
-		
-		wp_cache_set($survey_id.'_questions', $results);
-	}
+
 	return $results;		
 }
 
