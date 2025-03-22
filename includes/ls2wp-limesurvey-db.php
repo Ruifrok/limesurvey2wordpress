@@ -421,6 +421,27 @@ function ls2wp_db_get_group_name($group_id, $sid) {
 	
 }
 
+//All answercodes of a questiom(column in survey responsew table)
+function ls2wp_db_get_question_answercodes($survey_id, $q_code){
+	
+	global $lsdb;
+	
+	$sgq_code = ls2wp_get_sgq_code($survey_id, $q_code);
+	$sgq = $sgq_code['sgq'];
+
+	if(!ls2wp_reponse_table_column_exists($survey_id, $sgq)) return 'Column '.$sgq.'does not exist for survey '.$survey_id;
+
+	$sql = $lsdb->prepare("
+		SELECT %i
+		FROM {$lsdb->prefix}survey_%d
+		WHERE submitdate IS NOT NULL
+	", $sgq, $survey_id);	
+
+	$answer_codes = $lsdb->get_col($sql);	
+
+	return $answer_codes;
+}
+
 //All anwers and assessment values for a question set (survey)
 function ls2wp_db_get_answers($survey_id) {
 	global $lsdb;
@@ -512,7 +533,7 @@ function ls2wp_db_get_questions($survey_id, $sgqa=true) {
 						$question_other->type = 'T';
 						$question_other->title = 'other';
 						$question_other->other = 'N';
-						$question_other->question = 'Anders';					
+						$question_other->question = __('Other', 'ls2wp');					
 						
 						$results[$qcode.'other'] = $question_other;
 					}				
@@ -645,4 +666,18 @@ function ls2wp_response_table_exists($survey_id){
 
 	if($lsdb->get_var( $lsdb->prepare( "SHOW TABLES LIKE %s", $table_name )) == $table_name) return $table_name;
 	else return false; 
+}
+
+function ls2wp_reponse_table_column_exists($survey_id, $col){
+	
+	global $lsdb;
+	
+	$table_name = $lsdb->prefix.'survey_'.$survey_id;
+	
+	$column = $lsdb->get_results( $lsdb->prepare( "SHOW COLUMNS FROM %i LIKE %s", $table_name, $col ));
+	
+	if(empty($column)) return false;
+	else return $column;
+	 	
+	
 }

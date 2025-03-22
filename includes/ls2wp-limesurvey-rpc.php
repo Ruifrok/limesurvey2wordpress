@@ -307,7 +307,7 @@ function ls2wp_rpc_get_survey_groups(){
 }
 
 
-//Alle eigenschappen van een survey
+//Alle properties of a survey
 function ls2wp_rpc_get_survey_props($survey_id){
 
 	$survey_props = get_transient('survey_props_'.$survey_id);
@@ -568,6 +568,21 @@ class Ls2wp_RPC_Responses {
 		return $responses;	
 	}
 
+	//All answercodes of a questiom(column in survey responsew table)
+	public function ls2wp_rpc_get_question_answercodes($survey_id, $q_code){
+		
+		$resps = new Ls2wp_RPC_Responses();
+		$responses = $resps->get_responses($survey_id);	
+
+		foreach($responses as $response){
+			
+			if(empty($response->submitdate)) continue;
+		
+			$answer_codes[] = $response->$q_code;
+		}
+		return $answer_codes;
+	}
+
 	//get response of survey by token from responsetable in WP
 	public function ls2wp_rpc_get_response_by_token($survey_id, $token){
 		global $wpdb;
@@ -600,8 +615,6 @@ class Ls2wp_RPC_Responses {
 			
 		} else return false;	
 	}		
-		
-
 
 	private function unserialize_questions($response){
 	

@@ -13,7 +13,7 @@ function ls2wp_labels_question_group($response, $group){
 	$wp_answer_values = get_option($response['survey_id'].'_answer_values');
 
 	foreach($response as $q_code => $data){
-		
+	
 		//skip general data
 		if(!is_array($data)) continue;		
 		
@@ -419,10 +419,11 @@ function ls2wp_chart_data_survey($responses, $q_code){
 			if(!is_array($q_data) || $q_data['title'] != $question_title) continue;
 			
 			if($q_data['type'] == 'M' && !empty($q_data['answer_code'])){
-			
+				if(empty($mchart_data['data_points'][$q_data['subquestion']])) $mchart_data['data_points'][$q_data['subquestion']] = 0;
 				$mchart_data['data_points'][$q_data['subquestion']] = $mchart_data['data_points'][$q_data['subquestion']] + 1;
 				$mchart_data['question'] = $q_data['question'];
-			} elseif(!empty($response[$q_code]['answer']) && $code == $q_code){				
+			} elseif(!empty($response[$q_code]['answer']) && $code == $q_code){
+				if(empty($mchart_data['data_points'][$response[$q_code]['answer']])) $mchart_data['data_points'][$response[$q_code]['answer']] = 0;
 				$mchart_data['data_points'][$response[$q_code]['answer']] = $mchart_data['data_points'][$response[$q_code]['answer']] + 1;
 				$mchart_data['question'] = $response[$q_code]['subquestion'];
 			} elseif(!isset($responses[0][$q_code]) && !in_array($q_code, $q_titles)) $mchart_data['question'] = $q_code.' not found';

@@ -128,6 +128,22 @@ function ls2wp_get_responses_survey($survey_id){
 	return $responses;
 }
 
+//All answercodes of a question
+function ls2wp_get_question_answercodes($survey_id, $q_code){
+	
+	$use_rpc = get_option('use_rpc');
+	
+	if($use_rpc) {	
+
+		$resps = new Ls2wp_RPC_Responses();
+		$answer_codes = $resps->ls2wp_rpc_get_question_answercodes($survey_id, $q_code);
+	} else {		
+		$answer_codes = ls2wp_db_get_question_answercodes($survey_id, $q_code);		
+	}
+	
+	return $answer_codes;
+}
+
 //All participants of a survey
 function ls2wp_get_participants($survey_id, $name = ''){
 	
@@ -249,7 +265,7 @@ function ls2wp_get_ls_survey_url($survey_id, $user, $add_participant = true){
 
 	$participant = ls2wp_get_participant($survey_id, $user->user_email, $add_participant);
 	
-	if(is_array($participant)) return false;
+	if(!is_object($participant)) return false;
 
 	$survey_url = LS2WP_SITEURL.'index.php/'.$survey_id.'?token='.$participant->token.'&newtest=Y';
 	
@@ -324,3 +340,130 @@ add_action( 'profile_update', 'ls2wp_check_user_email_updated', 10, 2 );
 		}	
 		
 	}
+
+//All sgq(Survey/group/question) codes of a survey;
+function ls2wp_get_sgq_codes($survey_id){
+	
+	$sgq_codes = array();
+	$questions = ls2wp_get_questions($survey_id);
+		
+	foreach($questions as $question){
+		
+		$gid = $question->gid;			
+		
+		if($question->parent_qid == 0){ 
+			$qid = $question->qid;
+			$quest = $question->question;
+			$key = $question->title;
+		}
+		else {
+			$qid = $question->parent_qid.$question->title;
+			$quest = $question->question;
+			$key = $questions[$question->parent_qid]->title.'['.$question->title.']';				
+		}
+	
+		$sgq_codes[$key]['sgq'] = $survey_id.'X'.$gid.'X'.$qid;
+		$sgq_codes[$key]['question'] = $quest;
+		
+		if($question->parent_qid == 0 && $question->other == 'Y'){
+			$qid = $question->qid.'other';
+			$quest = __('Other', 'ls2wp');
+			$key = $question->title.'[other]';
+			
+			$sgq_codes[$key]['sgq'] = $survey_id.'X'.$gid.'X'.$qid;
+			$sgq_codes[$key]['question'] = $quest;			
+			
+		}
+		
+	}	
+	
+	return $sgq_codes;
+}
+
+//sgq code of a question.
+function ls2wp_get_sgq_code($survey_id, $q_code){
+	
+	$sgq_codes = ls2wp_get_sgq_codes($survey_id);
+
+	$sgq_code = $sgq_codes[$q_code];
+	
+	return $sgq_code;
+}
+
+
+//Array with all answers on a question(column in ls_survey_id table)
+function ls2wp_get_question_responses($survey_id, $q_code){
+	
+	global $lsdb;
+	
+	$sgq_data = ls2wp_get_sgq_code($survey_id, $q_code);
+	$sgq = $sgq_data['sgq'];
+	$question = $sgq_data['question'];
+
+	if(!$sgq) return 'No sgq-code found';
+
+	$answer_codes = ls2wp_get_question_answercodes($survey_id, $q_code);		
+	
+	$sgqa = explode('X', $sgq);
+	$group_id = $sgqa[1];
+	$qid = $sgqa[2];
+	
+	$survey_answers = ls2wp_get_answers($survey_id);
+	$wp_answer_values = get_option($survey_id.'_answer_values');	
+
+	$q_answers = array();
+	$answers = array();
+	
+	$answers['survey_id'] = $survey_id;
+	$answers['q_code'] = $q_code;
+	$answers['question'] = $question;
+	
+	foreach($survey_answers as $key => $data){
+		
+		if(str_contains($qid, $key)) $q_answers = $data;
+		
+	}
+
+	foreach($answer_codes as $answer_code){
+
+		if($answer_code == 'Y') $answer = __('Yes', 'ls2wp');
+		elseif($answer_code == 'N') $answer = __('No', 'ls2wp');
+		elseif($answer_code == 'M') $answer = __('Male', 'ls2wp');
+		elseif($answer_code == 'F') $answer = __('Female', 'ls2wp');
+		elseif($answer_code == '') $answer = '';
+		else $answer = $answer_code;
+
+		if(floatval($answer)) $answer = floatval($answer);
+		
+		if(!empty($q_answers)) $answers['answers'][] = $q_answers[$answer_code];
+		elseif(empty($wp_answer_values[$q_code])) $answers['answers'][] = array('answer' => $answer);
+		else {
+			foreach($wp_answer_values as $main_q_code => $answer_values){
+				
+				if($main_q_code == $q_code){
+					
+					$result['answer'] = $answer;
+					$result['value'] = $answer_values[$answer_code];
+					
+				} elseif(str_contains($q_code, $main_q_code)){
+				
+					foreach($answer_values as $sub_q_code => $subq_answer_value){
+						
+						if(str_contains($q_code, $sub_q_code)){
+
+							if(empty($answer_code)){
+								$result['answer'] = $answer;
+								$result['value'] = 0;
+							} else {
+								$result['answer'] = $answer;
+								$result['value'] = $subq_answer_value['value'];								
+							}
+						}
+					}					
+				}				
+			}			
+			$answers['answers'][] = $result;
+		}
+	}	
+	return $answers;
+}
