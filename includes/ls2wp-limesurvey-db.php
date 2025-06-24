@@ -595,6 +595,8 @@ function ls2wp_db_get_participant_by_token($survey_id, $token){
 function ls2wp_db_get_participant($survey_id, $email, $add_participant = false){
 	global $lsdb;
 	
+	if(!is_email($email)) return false;
+	
 	if(!ls2wp_participant_table_exists($survey_id)) return ['status' => 'Error: No survey participants table'];
 		
 	$sql = $lsdb->prepare("
