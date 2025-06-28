@@ -70,7 +70,9 @@ The following function can be used to get reponses from Limesurvey
   Returns a response in the given $survey_id by email address.
 + `ls2wp_get_response_by_token($survey_id, $token)`  
   Returns a response in the given $surve_id by token.
-
++ `ls2wp_get_question_responses($survey_id, $q_code)`   
+  Returns an array with answer and assessment value of a question from all responses.
+  
 Each response is an associative array with the following format.  
 The first elements contain general info. The submitdate determines if the survey is completed. If it is set it means the survey is completed. If the submitdate is empty the survey is not completed.
 The general data are followed by elements with key the question code and value an array of question data.
