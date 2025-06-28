@@ -920,6 +920,8 @@ class Ls2wp_RPC_Participants {
 		global $rpc_client;
 		global $s_key;	
 		
+		if(!is_email($email)) return false;
+		
 		$table_name = $this->table_name;
 		
 		$sql = $wpdb->prepare('
